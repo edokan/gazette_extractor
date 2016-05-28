@@ -117,6 +117,7 @@ if __name__ == "__main__":
         rectangles.append((x1, y1, x2, y2))
 
     page = cv2.imread(args.f, 0)
+    # print >> sys.stderr, page.shape
     for rectangle in rectangles:
         analyze_rectangle(page, rectangle)
         print_features()
