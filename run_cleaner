@@ -1,0 +1,9 @@
+#!/bin/sh
+#Czyszczenie błędów w XML
+python bad_xml.py $1
+name_unclean=$1
+name=$(echo $name_unclean | cut -f 1 -d '.')
+clean="_clean.xml"
+echo "Created $name$clean"
+#Wyrzucanie śmiecio-paragrafów, wyrzucenie na stdout współrzędnych : paragrafów, linii oraz słów.
+python3 cleaner.py $name$clean

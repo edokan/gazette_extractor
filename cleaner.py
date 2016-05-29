@@ -34,25 +34,25 @@ def check_paragraph():
     root = tree.getroot()
     text = ""
     for word in root.iter("WORD"):
-        text += word.text
+        if word.text != None: text += word.text
     if get_alpha(text) > get_punct_amount(text): return 1
     else : return 0
     
 def create_output():
     """Tworzy finalny output"""
-    print "PARAGRAPH " + str(para_begin_end[0]) + " " + str(para_begin_end[-1])
-    for records in output_words_lines : print records
+    print("PARAGRAPH " + str(para_begin_end[0]) + " " + str(para_begin_end[-1]))
+    for records in output_words_lines : print(records)
 
 def create_words_lines_output(coordinates_words):
     """pomocnicza funkcja tworzaca dane dla linii oraz slow"""
     coordinates = []
-    for key, value in coordinates_words.iteritems():
+    for key, value in coordinates_words.items():
         coordinates.append(key)
         para_begin_end.append(key)
 
     output_words_lines.append("LINE : " + str(coordinates[0]) + " " + str(coordinates[-1]))
 
-    for key, value in coordinates_words.iteritems():
+    for key, value in coordinates_words.items():
         output_words_lines.append("WORD : " + str(key) + " " + value)
 
 def get_words_xml():
@@ -61,13 +61,14 @@ def get_words_xml():
     root = tree.getroot()
     coordinates_word = {}
     for word in root.iter("WORD"):
-        if not word: coordinates = list(word.attrib.values())[0].split(',')
-        x1 = coordinates[0]
-        y1 = coordinates[1]
-        x2 = coordinates[2]
-        y2 = coordinates[3]
-        coordinates_word[x1,y1,x2,y2] = word.text
-    create_words_lines_output(coordinates_word)
+        if not word: 
+            coordinates = list(word.attrib.values())[0].split(',')
+            x1 = coordinates[0]
+            y1 = coordinates[1]
+            x2 = coordinates[2]
+            y2 = coordinates[3]
+            if (word.text != None) : coordinates_word[x1,y1,x2,y2] = word.text
+    if coordinates_word : create_words_lines_output(coordinates_word)
 
 def get_lines_xml():
     """funkcja wyłuskująca z xmla linie"""
@@ -75,7 +76,7 @@ def get_lines_xml():
     root = tree.getroot()
     for line in root.iter("LINE"):
         line_xml = ET.tostring(line)
-        with open("line_xml_file", "w") as output:
+        with open("line_xml_file", "wb") as output:
             output.write(line_xml)
         get_words_xml()
         
@@ -83,7 +84,7 @@ def get_paragraphs_xml():
     para_xml = ""
     for line in root.iter("PARAGRAPH"):
         para_xml = ET.tostring(line)        
-        with open("para_xml_file", "w") as output:
+        with open("para_xml_file", "wb") as output:
             output.write(para_xml)
         if check_paragraph():
             get_lines_xml()
