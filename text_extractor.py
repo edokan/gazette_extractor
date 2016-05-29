@@ -6,46 +6,62 @@ import xml.etree.ElementTree as ET
 import string
 import argparse
 
-words_counter = 0
-lines_counter = 0
-chars_counter = 0
-punct_counter = 0 
-letters_counter = 0
-count = lambda l1, l2: len(list(filter(lambda c: c in l2, l1)))
-
 parser = argparse.ArgumentParser(description="Extractor of text features included in .xml file od djvu format")
 parser.add_argument('p', help = "Path to .xml file produced from djvu")
-parser.add_argument('o', help = "File name where output will be kept")
-parser.add_argument('--c', help = "Coordinates mode - write to file coordinates of words")
-parser.add_argument('--tf', help = "Text features mode - write to file number of : words, lines, chars, punctations, letters")
 args = parser.parse_args()
 
 tree = ET.parse(args.p)
 root = tree.getroot()
 
-for word in root.iter('WORD'):
-    if args.tf: 
-        chars_counter += len(word.text)
-        punct_counter += count(word.text, string.punctuation)
+def cut_xml(_x1, _y1, _x2, _y2):
+    words_list = []
+    for word in root.iter('WORD'):
+        if word is not None: 
+            coordinates = list(word.attrib.values())[0].split(',')                                                                  
+            x1 = coordinates[0]                                                                                                                     
+            y1 = coordinates[1]                                                                                                                       
+            x2 = coordinates[2]                                                                                                                       
+            y2 = coordinates[3]
+        if (int(x1) > _x1 and int(x2) < _x2 and int(y1) > _y1 and int(y2) < _y2 and word.text is not None): words_list.append(word.text)
+    return words_list
 
-    if args.c:
-        if not word: coordinates = list(word.attrib.values())[0].split(',')
-        x1 = coordinates[0]
-        y1 = coordinates[1]
-        x2 = coordinates[2]
-        y2 = coordinates[3]
-        print("\t".join([str(x1), str(y1), str(x2), str(y2)]))
+def get_chars_amount(words_list):
+    return sum([len(word) for word in words_list])
 
+def get_punct_amount(words_list):
+    count = lambda l1, l2: len(list(filter(lambda c: c in l2, l1)))
+    return sum([count(word, string.punctuation) for word in words_list])
 
-if args.tf:
-    for line in open(args.p):
-        line = line.rstrip()
-        if ("<WORD" in line): words_counter += 1
-        if ("<LINE>" in line): lines_counter += 1
+def get_words_amount(words_list):
+    return len(words_list)
 
-    if (chars_counter - punct_counter < 0): letters_counter = 0
-    else : letters_counter = chars_counter - punct_counter
+def get_letters_amount(chars_counter, punct_counter):
+    if (chars_counter - punct_counter < 0): return 0
+    else : return chars_counter - punct_counter
 
-    with open(args.o, 'w') as output:
-        output.write("WORDS_COUNTER=%s\nLINES_COUNTER=%s\nCHARS_COUNTER=%s\nPUNCT_COUNTER=%s\nLETTERS_COUNTER=%s\n" % (words_counter, lines_counter, chars_counter, punct_counter, letters_counter))
+def get_vowels_consonants_amount(words_list):
+    vowel_counter = 0
+    consonants_counter = 0
+    for word in words_list:
+        for letter in word:
+            if letter in "aeiouyóąę" : vowel_counter += 1
+            elif (letter not in "aeiouyóąę" and letter.isalpha()): consonants_counter += 1
+    return vowel_counter, consonants_counter
 
+def main():
+
+    words_list = cut_xml(100,200,400,600)
+    chars = get_chars_amount(words_list)
+    words = get_words_amount(words_list)
+    punct = get_punct_amount(words_list)
+    letters = get_letters_amount(chars, punct)
+    vowels, consonants = get_vowels_consonants_amount(words_list)
+
+    print("Chars : " + str(chars))
+    print("Words : " + str(words))
+    print("Punct : " + str(punct))
+    print("Letters : " + str(letters))
+    print("Vowels : " + str(vowels))
+    print("Consonants : " + str(consonants))
+
+main()
