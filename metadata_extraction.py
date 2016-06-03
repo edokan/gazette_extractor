@@ -1,17 +1,37 @@
 import sys
+from collections import OrderedDict
+from nltk.tokenize import word_tokenize
+
 
 metadata = {}
+features = OrderedDict()
+
+def get_gazette_title():
+    splitted = word_tokenize(metadata["title"], language = "polish")
+    tokens = [w for w in splitted if w.isalnum()]
+    
+    for token in tokens:
+        features["INTITLE+" + token] = ""
+
+def get_gazette_year():
+    if metadata["durationStart"] is not None:
+        features["YEAR"] = metadata["durationStart"][:4]
+    else:
+        features["YEAR"] = metadata["durationEnd"][:4]
+
 
 if __name__ == "__main__":
     for line in sys.stdin:
         name, value = [x.strip().replace('"', '') for x in line.split("\t")]
         metadata[name] = value
 
-    if metadata["durationStart"] is not None:
-        YEAR_meta = "YEAR:" + metadata["durationStart"][:4]
-    else:
-        YEAR_meta = "YEAR:" + metadata["durationEnd"][:4]
+    get_gazette_title()
+    get_gazette_year()
 
-    TITLE_meta = "_".join(metadata["title"].split(",")[0].split())
-
-    print(TITLE_meta, YEAR_meta, sep = "\t")
+    for feature in features:
+        if features[feature] == "":
+            sys.stdout.write(feature + "\t")
+        else:
+            sys.stdout.write(feature + ":" + features[feature] + "\t")
+        sys.stdout.flush()
+    # sys.stdout.write("\n")

@@ -3,6 +3,7 @@ import cv2
 import argparse
 from collections import OrderedDict
 import numpy as np
+import os
 
 parser = argparse.ArgumentParser(description = "")
 parser.add_argument("-f", help = "Page image input")
@@ -47,7 +48,7 @@ def preprocess_image(original):
     
     ## Thresholding
     otsu_value, thresholded = cv2.threshold(image, 200, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
-    
+
     ## Cover words
     remove_words(thresholded) 
    
@@ -61,21 +62,32 @@ def find_rectangles(original, thickened):
     rectangles = []
     (contours, _) = cv2.findContours(thickened.copy(),cv2.RETR_TREE, cv2.CHAIN_APPROX_TC89_KCOS)
 
+    rect_image = original.copy()
+
     for i, cnt in enumerate(contours):
         x, y, w, h = cv2.boundingRect(cnt)
         x1, y1, x2, y2 = x, y, x + w, y + h
-        roi = original[x1:x2 + 1, y1:y2 + 1]
+        roi = original[y1:y2 + 1, x1:x2 + 1]
         height, width, channels = roi.shape
-        if height > 0 and width > 0:
+        if height > 10 and width > 10:
             rectangles.append((x, y, x + w, y + h))
 
     if args.v:
         rect_output = args.f.strip(".full.tiff") + ".rect.tiff"
         skel_output = args.f.strip(".full.tiff") + ".skel.tiff"
+        rect_dir = args.f.strip(".full.tiff")
+        os.mkdir(rect_dir)
+        
+        enum = 0
         for x1, y1, x2, y2 in rectangles:
-            cv2.rectangle(original, (x1, y1), (x2, y2), (255,0,0) ,5)
-    
-        cv2.imwrite(rect_output, original)
+            height = y2 - y1
+            width = x2 - x1
+            if height > 30 and width > 30:
+                cv2.imwrite(rect_dir + "/rect_" + str(enum) + ".tiff", original[y1:y2 + 1, x1:x2 + 1])
+                enum += 1
+            cv2.rectangle(rect_image, (x1, y1), (x2, y2), (255,0,0) ,5)
+
+        cv2.imwrite(rect_output, rect_image)
         cv2.imwrite(skel_output, thickened)
    
     for x1, y1, x2, y2 in rectangles:

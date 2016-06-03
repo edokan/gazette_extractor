@@ -1,24 +1,33 @@
-### GAZETTE PREPROCESSING ###
+### GAZETTE  ###
 
-## Works for only 1 page, multiple page in progress ###
+SHELL := /bin/bash
 
-all: /home/alvis/Studia/gazette_analyzer/makefile_test/features.vw
+.PHONY: all preprocess merge clean
 
-.SECONDARY:
+TARGETS=$(shell ls $$PWD/polygon/*.djvu | sed 's|.djvu$$|.features.vw|g')
 
-### 1. Create preprocessing directory
-###	   Extract metadata file
+all: preprocess merge
 
-%/preprocessing/metadata.tsv: %/*.djvu
-	mkdir -p $(@D)
-	djvused -u $< -e 'print-meta' > $@
+preprocess: ${TARGETS}
 
-%/extracted: %/*.djvu
-	sh unpack.sh $<
+merge: training.vw
 
-%/analyzed: %/extracted
+clean:
+	rm -r $$PWD/polygon/*/
+	rm -r $$PWD/polygon/*.features.vw
+
+############################## PREPROCESS #######################################
+
+%.features.vw: %.analyzed
+	echo $<
+	cat $*/*.features.vw > $@
 	
+%.analyzed: %.djvu
+	sh analyze_pages.sh $< 
+	#touch $@
 
-%/features.vw: %/analyzed
-	touch $@
 
+################################### MERGE #######################################
+
+training.vw:
+	cat $$PWD/polygon/*.features.vw > training.vw

@@ -6,8 +6,9 @@ import numpy as np
 from detect_peaks import detect_peaks
 
 parser = argparse.ArgumentParser(description = "")
-parser.add_argument("-f", help = "Page image input")
+parser.add_argument("-f", help = "Page image input", required = True)
 parser.add_argument("-v", help = "Verbose mode", action = 'store_true', default = False)
+parser.add_argument("-n", help = "Take every h pixel to count peaks and valleys", type = int, default = 2)
 args = parser.parse_args()
 
 features = OrderedDict()
@@ -47,7 +48,7 @@ def histograms(roi):
 
     ############# HISTOGRAM PEAKS AND VALLEYS #######################################33
     
-    every = 4
+    every = args.n
 
     horizontal_less = horizontal[0::every]
     vertical_less = vertical[0::every]
@@ -86,16 +87,22 @@ def histograms(roi):
         cv2.waitKey()
 
 
-def analyze_rectangle(page, rectangle):
-    x1, y1, x2, y2 = rectangle
-    roi = page[x1:x2 + 1, y1:y2 + 1]
-    height, width = roi.shape
-    
+def calculate_filled(roi, height, width):
     all_pixels = height * width
     white_pixels = cv2.countNonZero(roi)
     black_pixels = all_pixels - white_pixels 
     filled = float(black_pixels) / all_pixels
-    
+    return filled
+
+
+def analyze_rectangle(page, rectangle):
+    x1, y1, x2, y2 = rectangle
+    roi = page[y1:y2 + 1, x1:x2 + 1]
+    height, width = roi.shape
+
+    filled = calculate_filled(roi, height, width)
+
+
     # print(height, width, filled)
     features["HEIGHT"] = str(height)
     features["WIDTH"] = str(width)
@@ -110,14 +117,16 @@ def print_features():
         sys.stdout.flush()
     sys.stdout.write("\n")
 
+
 if __name__ == "__main__":
     rectangles = []
     for line in sys.stdin:
         x1, y1, x2, y2 = [int(x.split(":")[1]) for x in line.strip().split()]
         rectangles.append((x1, y1, x2, y2))
 
-    page = cv2.imread(args.f, 0)
-    # print >> sys.stderr, page.shape
+    image = cv2.imread(args.f, 0) 
+    otsu_value, page = cv2.threshold(image, 200, 255, cv2.THRESH_BINARY_INV - cv2.THRESH_OTSU)
+
     for rectangle in rectangles:
         analyze_rectangle(page, rectangle)
         print_features()
