@@ -40,7 +40,7 @@ def check_paragraph():
     
 def create_output():
     """Tworzy finalny output"""
-    print("PARAGRAPH " + str(para_begin_end[0]) + " " + str(para_begin_end[-1]))
+    print("PARAGRAPH\t" + str(para_begin_end[0][0]) + " " + str(para_begin_end[0][1]) + " " + str(para_begin_end[-1][2]) + " " + str(para_begin_end[-1][3]))
     for records in output_words_lines : print(records)
 
 def create_words_lines_output(coordinates_words):
@@ -50,10 +50,12 @@ def create_words_lines_output(coordinates_words):
         coordinates.append(key)
         para_begin_end.append(key)
 
-    output_words_lines.append("LINE : " + str(coordinates[0]) + " " + str(coordinates[-1]))
+    output_words_lines.append("LINE\t" + str(coordinates[0][0]) + " " + str(coordinates[0][1]) + " " + str(coordinates[-1][2]) + " " + str(coordinates[-1][3]))
 
     for key, value in coordinates_words.items():
-        output_words_lines.append("WORD : " + str(key) + " " + value)
+        keys = []
+        for k in key: keys.append(k)
+        output_words_lines.append("WORD\t" + ' '.join(keys) + "\t" + value)
 
 def get_words_xml():
     """funkcja wyłuskująca z xmla słowa"""

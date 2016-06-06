@@ -7,8 +7,11 @@ import string
 import argparse
 
 parser = argparse.ArgumentParser(description="Extractor of text features included in .xml file od djvu format")
-parser.add_argument('p', help = "Path to .xml file produced from djvu")
+parser.add_argument('p', help="Path to .xml file produced from djvu")
+parser.add_argument('coordinates', help="Coordinates to cut it from file in single quote, whitespace separated")
 args = parser.parse_args()
+
+coord_input = args.coordinates.split(" ")
 
 tree = ET.parse(args.p)
 root = tree.getroot()
@@ -50,7 +53,8 @@ def get_vowels_consonants_amount(words_list):
 
 def main():
 
-    words_list = cut_xml(100,200,400,600)
+    words_list = cut_xml(int(coord_input[0]),int(coord_input[1]),int(coord_input[2]),int(coord_input[3]))
+    #nie jestem pewna, czy wsadzanie float ma sens, dlatego rzutuje na inta.
     chars = get_chars_amount(words_list)
     words = get_words_amount(words_list)
     punct = get_punct_amount(words_list)
