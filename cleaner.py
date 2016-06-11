@@ -6,23 +6,20 @@ import xml.etree.ElementTree as ET
 import argparse
 import string
 
-parser = argparse.ArgumentParser(description="OCR nonsense cleaner")
-parser.add_argument('p', help = "Path to .xml file produced from djvu")
-args = parser.parse_args()
-
-tree = ET.parse(args.p)
-root = tree.getroot()
+tree_xml = ""
+for line in sys.stdin: tree_xml += line
+root = ET.fromstring(tree_xml)
 
 para_begin_end = []
 output_words_lines = []
 
 def get_punct_amount(txt):
-    """Sprawdza ilość znaków interpunkcyjnych, następnie ją zwraca"""
+    """Sprawdza ilość znaków interpunkcyjnych, następnie ją zwraca"""
     count = lambda l1, l2: len(list(filter(lambda c: c in l2, l1)))
     return sum([count(word, string.punctuation) for word in txt])
 
 def get_alpha(line):
-    """Sprawdza ilość znaków alfanumerycznych, następnie je zwraca"""
+    """Sprawdza ilość znaków alfanumerycznych, następnie je zwraca"""
     alpha = 0
     for letter in line:
         if letter.isalpha(): alpha += 1

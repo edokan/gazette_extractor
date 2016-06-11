@@ -1,6 +1,7 @@
 BYTE_OFFSETS = True
 import sys, re, codecs
 
+clean_output = ""
 fname = sys.argv[1]
 fout = open(sys.argv[1].replace(".xml", "_clean.xml"), "w")
 
@@ -33,4 +34,6 @@ with open(fname) as bad_file:
         for wrong_char in wrong_chars:
             if wrong_char in line:
                 line = line.replace(wrong_char, "")
-        fout.write(line)
+        clean_output += line
+
+print clean_output
