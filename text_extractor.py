@@ -2,19 +2,18 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import re
 import xml.etree.ElementTree as ET
 import string
 import argparse
 
 parser = argparse.ArgumentParser(description="Extractor of text features included in .xml file od djvu format")
-parser.add_argument('p', help="Path to .xml file produced from djvu")
-parser.add_argument('coordinates', help="Coordinates to cut it from file in single quote, whitespace separated")
+parser.add_argument('-pc', help="filename where coordinates are kept.")
 args = parser.parse_args()
 
-coord_input = args.coordinates.split(" ")
-
-tree = ET.parse(args.p)
-root = tree.getroot()
+tree_xml = ""
+for line in sys.stdin: tree_xml += line
+root = ET.fromstring(tree_xml)
 
 def cut_xml(_x1, _y1, _x2, _y2):
     words_list = []
@@ -51,21 +50,29 @@ def get_vowels_consonants_amount(words_list):
             elif (letter not in "aeiouyóąę" and letter.isalpha()): consonants_counter += 1
     return vowel_counter, consonants_counter
 
+def get_numbers_amount(words_list):
+    digit_counter = 0
+    for word in words_list:
+        for letter in word:
+            if letter.isdigit(): digit_counter += 1
+    return digit_counter
+
 def main():
+    coords_tab = []
+    coords_input = []
+    with open(args.pc) as coords:
+        for coord in coords.readlines(): 
+            coords_input.append(coord.replace(":","").replace("X1","").replace("X2","").replace("X3","").replace("X4","").replace("Y1","").replace("Y2","").replace("Y3","").replace("Y4","").rstrip().split("\t"))
 
-    words_list = cut_xml(int(coord_input[0]),int(coord_input[1]),int(coord_input[2]),int(coord_input[3]))
-    #nie jestem pewna, czy wsadzanie float ma sens, dlatego rzutuje na inta.
-    chars = get_chars_amount(words_list)
-    words = get_words_amount(words_list)
-    punct = get_punct_amount(words_list)
-    letters = get_letters_amount(chars, punct)
-    vowels, consonants = get_vowels_consonants_amount(words_list)
+    for coord_input in coords_input :
+        words_list = cut_xml(int(coord_input[0]),int(coord_input[1]),int(coord_input[2]),int(coord_input[3]))
+        chars = get_chars_amount(words_list)
+        words = get_words_amount(words_list)
+        punct = get_punct_amount(words_list)
+        letters = get_letters_amount(chars, punct)
+        vowels, consonants = get_vowels_consonants_amount(words_list)
+        digits = get_numbers_amount(words_list)
 
-    print("Chars : " + str(chars))
-    print("Words : " + str(words))
-    print("Punct : " + str(punct))
-    print("Letters : " + str(letters))
-    print("Vowels : " + str(vowels))
-    print("Consonants : " + str(consonants))
+        sys.stdout.write("Chars:" + str(chars) + "\tWords:" + str(words) + "\tPunct:" + str(punct) + "\tLetters:" + str(letters) + "\tVowels:" + str(vowels) + "\tDigits:" + str(digits) + "\tConsonants:" + str(consonants) + "\n")
 
 main()
