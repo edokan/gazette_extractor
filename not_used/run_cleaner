@@ -1,0 +1,4 @@
+#!/bin/sh
+#pierwszy parametr pozycyjny to xml, który ma zostać przeczyszczony z zakrótkich paragrafów
+#najlpierw musi być przeczyszczony z nieobsługiwanych znaków
+python bad_xml.py $1 | python3 cleaner.py
