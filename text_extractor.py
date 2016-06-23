@@ -73,6 +73,6 @@ def main():
         vowels, consonants = get_vowels_consonants_amount(words_list)
         digits = get_numbers_amount(words_list)
 
-        sys.stdout.write("Chars:" + str(chars) + "\tWords:" + str(words) + "\tPunct:" + str(punct) + "\tLetters:" + str(letters) + "\tVowels:" + str(vowels) + "\tDigits:" + str(digits) + "\tConsonants:" + str(consonants) + "\n")
+        sys.stdout.write("CHARS:" + str(chars) + "\tWORDS:" + str(words) + "\tPUNCT:" + str(punct) + "\tLETTERS:" + str(letters) + "\tVOWELS:" + str(vowels) + "\tDIGITS:" + str(digits) + "\tCONSONANTS:" + str(consonants) + "\n")
 
 main()
