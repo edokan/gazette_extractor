@@ -1,3 +1,0 @@
-#!/bin/sh
-python bad_xml.py $1 | python3 cleaner.py
-rm *_xml_file
