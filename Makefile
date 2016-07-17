@@ -1,33 +1,36 @@
-### GAZETTE  ###
+#####################################################################################################
+#																									#
+#										MOTHERSHIP MAKEFILE											#
+#																									#
+#####################################################################################################
 
-SHELL := /bin/bash
+.PHONY: train unpack analyze get-classes merge train-vw
 
-.PHONY: all preprocess merge clean
+SHELL=/bin/bash
 
-TARGETS=$(shell ls $$PWD/polygon/*.djvu | sed 's|.djvu$$|.features.vw|g')
+DJVU_LIST=$(wildcard TRAIN/*.djvu)
+UNPACKED_LIST=$(patsubst %.djvu,%.UNPACKED,$(DJVU_LIST))
+ANALYZED_LIST=$(patsubst %.djvu,%.ANALYZED,$(DJVU_LIST))
+CLASSIFIED_LIST=$(patsubst %.djvu,%.CLASSIFIED,$(DJVU_LIST))
 
-all: preprocess merge
+train: unpack analyze get-classes merge train-vw
 
-preprocess: ${TARGETS}
+### UNPACK
 
-merge: training.vw
+unpack: $(UNPACKED_LIST)
+	@echo "FINISHED UNPACKING ALL NEWSPAPERS"
 
-clean:
-	rm -r $$PWD/polygon/*/
-	rm -r $$PWD/polygon/*.features.vw
+%.UNPACKED: %.djvu
+	./unpack.sh $*.djvu
 
-############################## PREPROCESS #######################################
+### ANALYZE
 
-%.features.vw: %.analyzed
-	echo $<
-	cat $*/*.features.vw > $@
-	
-%.analyzed: %.djvu
-	sh analyze_pages.sh $< 
-	#touch $@
+analyze: $(ANALYZED_LIST)
+	@echo "FINISHED ANALYZING ALL NEWSPAPERS"
+
+%.ANALYZED: %.UNPACKED
+	./analyze.sh $*.djvu
 
 
-################################### MERGE #######################################
 
-training.vw:
-	cat $$PWD/polygon/*.features.vw > training.vw
+

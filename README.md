@@ -1,3 +1,0 @@
-Gazette Extractor to projekt inżynierski polegający na wydobywaniu ze starych (ok. XIX w.) gazet zadanych przez użytkownika fragmentów. Używane narzędzia to (chwilowo tylko) opencv 2.4, pomagający w widzeniu komputerowym. Program ma za zadanie nie tylko rozpoznać interesujący użytkownika fragment gazety, ale również go odpowiednio zlokalizować na skanie.
-
-Twórcy : Ambroziak Sandra, Behnke Maximiliana, Kilichowska Zuzanna

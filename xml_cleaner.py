@@ -1,90 +1,38 @@
-#!/usr/bin/python3                                                                                                                                   
-# -*- coding: utf-8 -*-      
+BYTE_OFFSETS = True
+import sys, re, codecs
 
-import sys
-import xml.etree.ElementTree as ET
-import argparse
-import string
+clean_output = ""
+fname = sys.argv[1]
 
-tree_xml = ""
-for line in sys.stdin: tree_xml += line
-root = ET.fromstring(tree_xml)
+if BYTE_OFFSETS:
+    text = open(fname, "rb").read()
+else:
+    text = codecs.open(fname, "rb", "utf8").read()
 
-para_begin_end = []
-output_words_lines = []
+wrong_chars = []
+rx = re.compile("&#([0-9]+);|&#x([0-9a-fA-F]+);")
+endpos = len(text)
+pos = 0
 
-def get_punct_amount(txt):
-    """Sprawdza ilość znaków interpunkcyjnych, następnie ją zwraca"""
-    count = lambda l1, l2: len(list(filter(lambda c: c in l2, l1)))
-    return sum([count(word, string.punctuation) for word in txt])
+while pos < endpos:
+    m = rx.search(text, pos)
+    if not m: break
+    mstart, mend = m.span()
+    target = m.group(1)
+    if target:
+        num = int(target)
+    else:
+        num = int(m.group(2), 16)
+    if not(num in (0x9, 0xA, 0xD) or 0x20 <= num <= 0xD7FF
+    or 0xE000 <= num <= 0xFFFD or 0x10000 <= num <= 0x10FFFF):
+        wrong_chars.append(m.group())
+    pos = mend
 
-def get_alpha(line):
-    """Sprawdza ilość znaków alfanumerycznych, następnie je zwraca"""
-    alpha = 0
-    for letter in line:
-        if letter.isalpha(): alpha += 1
-    return alpha
+with open(fname) as bad_file:
+    for line in bad_file.readlines():
+        for wrong_char in wrong_chars:
+            if wrong_char in line:
+                line = line.replace(wrong_char, "")
+        clean_output += line
 
-def check_paragraph(para_xml):
-    """Sprawdza czy paragraf zawiera śmieci, następnie zawraca prawdę jeśli paragrad nie jest śmieciowy"""
-    root = ET.fromstring(para_xml)
-    text = ""
-    for word in root.iter("WORD"):
-        if word.text != None: text += word.text
-    if get_alpha(text) > get_punct_amount(text): return 1
-    else : return 0
-    
-def create_output():
-    """Tworzy finalny output"""
-    print("PARAGRAPH\t" + str(para_begin_end[0][0]) + " " + str(para_begin_end[0][1]) + " " + str(para_begin_end[-1][2]) + " " + str(para_begin_end[-1][3]))
-    for records in output_words_lines : print(records)
-
-def create_words_lines_output(coordinates_words):
-    """pomocnicza funkcja tworzaca dane dla linii oraz slow"""
-    coordinates = []
-    for key, value in coordinates_words.items():
-        coordinates.append(key)
-        para_begin_end.append(key)
-
-    output_words_lines.append("LINE\t" + str(coordinates[0][0]) + " " + str(coordinates[0][1]) + " " + str(coordinates[-1][2]) + " " + str(coordinates[-1][3]))
-
-    for key, value in coordinates_words.items():
-        keys = []
-        for k in key: keys.append(k)
-        output_words_lines.append("WORD\t" + ' '.join(keys) + "\t" + value)
-
-def get_words_xml(line_xml):
-    """funkcja wyłuskująca z xmla słowa"""
-    root = ET.fromstring(line_xml)
-    coordinates_word = {}
-    for word in root.iter("WORD"):
-        if not word: 
-            coordinates = list(word.attrib.values())[0].split(',')
-            x1 = coordinates[0]
-            y1 = coordinates[1]
-            x2 = coordinates[2]
-            y2 = coordinates[3]
-            if (word.text != None) : coordinates_word[x1,y1,x2,y2] = word.text
-    if coordinates_word : create_words_lines_output(coordinates_word)
-
-def get_lines_xml(para_xml):
-    """funkcja wyłuskująca z xmla linie"""
-    root = ET.fromstring(para_xml)
-    for line in root.iter("LINE"):
-        line_xml = ET.tostring(line)
-        get_words_xml(line_xml)
-        
-def get_paragraphs_xml():
-    para_xml = ""
-    for line in root.iter("PARAGRAPH"):
-        para_xml = ET.tostring(line)        
-        if check_paragraph(para_xml):
-            get_lines_xml(para_xml)
-            create_output()
-            para_begin_end[:] = []
-            output_words_lines[:] = []
-
-def main():
-    get_paragraphs_xml()
-
-main()
+print clean_output
