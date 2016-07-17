@@ -1,6 +1,9 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+#Skrypt ktory na wyjsciu pokazuje cechy tekstowe gazety, jako paramentr pozycyjny podajemy plik .rect zawierajacy informacje o wygenerowanych prostokatach (wspolrzedne)
+#Przez sys.stdin podajemy plik .xml (oczywiscie akuratny z plikiem .rect) - przepuszczony przez skrypt wrong_chars_xml_cleaner
+
 import sys
 import re
 import xml.etree.ElementTree as ET
@@ -57,7 +60,29 @@ def get_numbers_amount(words_list):
             if letter.isdigit(): digit_counter += 1
     return digit_counter
 
-def main():
+def get_trigrams(words_list):
+   sentence = " ".join(words_list)
+   trigrams = []
+   if len(sentence) < 3 : return None
+   else :
+       index = 0
+       while index < len(sentence) - 2:
+           trigrams.append("TRIGRAM+" + str(sentence[index]) + str(sentence[index + 1]) + str(sentence[index + 2]))
+           index += 1
+       return "\t".join(trigrams)
+
+def get_bigrams(words_list):
+   sentence = " ".join(words_list)
+   bigrams = []
+   if len(sentence) < 2 : return None
+   else :
+       index = 0
+       while index < len(sentence) - 1:
+           bigrams.append("BIGRAM+" + str(sentence[index]) + str(sentence[index + 1]))
+           index += 1
+       return "\t".join(bigrams)
+                          
+if __name__ == "__main__":
     coords_tab = []
     coords_input = []
     with open(args.pc) as coords:
@@ -72,7 +97,8 @@ def main():
         letters = get_letters_amount(chars, punct)
         vowels, consonants = get_vowels_consonants_amount(words_list)
         digits = get_numbers_amount(words_list)
+        trigrams = get_trigrams(words_list)
+        bigrams = get_bigrams(words_list)
 
-        sys.stdout.write("CHARS:" + str(chars) + "\tWORDS:" + str(words) + "\tPUNCT:" + str(punct) + "\tLETTERS:" + str(letters) + "\tVOWELS:" + str(vowels) + "\tDIGITS:" + str(digits) + "\tCONSONANTS:" + str(consonants) + "\n")
+        sys.stdout.write("SENTENCE:" + " ".join(words_list) + "\t" + "CHARS:" + str(chars) + "\tWORDS:" + str(words) + "\tPUNCT:" + str(punct) + "\tLETTERS:" + str(letters) + "\tVOWELS:" + str(vowels) + "\tDIGITS:" + str(digits) + "\tCONSONANTS:" + str(consonants) + "\t" + str(trigrams)  + "\t" + str(bigrams) + "\n")
 
-main()
