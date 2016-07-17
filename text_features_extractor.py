@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-
+#Wyciaganie cech tekstowych
 import sys
 import re
 import xml.etree.ElementTree as ET
