@@ -5,9 +5,6 @@
    .xml file needs to be cleaned by xml_cleaner.py
    Helps in checking what is word and what is the picture fragment.
 """
-#Skrypt, kory wyrzuca koordynaty slow, paragrafow oraz linii wg podanego xmla
-#ROGER THAT: plik xml MUSI byc przepuszczony przez skrypt wrong_chars_xml_cleaner.py, ktory usuwa niedozwolone znaki z pliku xml.
-
 import sys
 import xml.etree.ElementTree as ET
 import string
