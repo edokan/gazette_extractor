@@ -15,11 +15,9 @@ do
     python xml_cleaner.py $DIR/page_$i.xml > $DIR/page_$i.xml_cleaned
 
     #Extract word, lines and paragraph coordinates from xml
-    # IN PROGRESS, skrypt wywala niepotrzebne pliki
     python3 xml_extract.py \
         < $DIR/page_$i.xml_cleaned \
         > $DIR/page_$i.xml_coord
-    rm para_xml_file line_xml_file
 
     #Extract potential necro rectangles
    python rectangle.py -f $DIR/page_$i.tiff -v \
