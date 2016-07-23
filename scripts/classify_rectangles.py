@@ -3,7 +3,12 @@ import argparse
 import cv2
 from collections import OrderedDict
 
-parser = argparse.ArgumentParser(description = "")
+parser = argparse.ArgumentParser(description = 
+        """
+        Tags generated rectangles using information stored in necro file.
+        If there is necrology on page and there's no corresponding rectangle, it's appended to rectangle file.
+        """
+        )
 parser.add_argument("-n", help = "File with necro coordinates", required = True)
 parser.add_argument("-r", help = "File with generated rectangles", required = True)
 parser.add_argument("-i", help = "Page number", type = int, required = True)
@@ -14,6 +19,10 @@ necrologies = []
 
 
 def load_rectangles():
+    """
+    Loads rectangles' coordinates from file.
+    """
+
     with open(args.r) as f:
         for line in f:
             x1, y1, x2, y2 = [int(c.split(":")[1]) for c in line.split()]
@@ -21,12 +30,21 @@ def load_rectangles():
 
 
 def load_necrologies():
+    """
+    Load necrologies' coordinates from file.
+    """
+
     with open(args.n) as f:
         for line in f:
             necrologies.append(tuple([int(c) for c in line.strip().split()]))
 
 
 def check_if_near(necrology, rectangle):
+    """
+    Check if coordinates of rectangle are near enough of necrology's.
+    If so, we tag rectangle as necrology.
+    """
+
     n_page, n_x1, n_y1, n_x2, n_y2 = necrology
     r_x1, r_y1, r_x2, r_y2 = rectangle
 
@@ -45,6 +63,10 @@ def check_if_near(necrology, rectangle):
 
 
 def classify():
+    """
+    Tag all rectangles with classes based on necrologies coordinates.
+    """
+
     modified = False
     for necro in necrologies:
         page, x1, y1, x2, y2 = necro
@@ -62,11 +84,11 @@ def classify():
     return modified
 
 
-if __name__ == "__main__":
-    load_rectangles()
-    load_necrologies()
-    modified = classify()
-
+def modify_rectangle_file(modified):
+    """
+    If any necrology is not found in rectangles, rectangle file is modified.
+    """
+    
     if modified:
         with open(args.r, 'w') as f:
             for rect in rectangles:
@@ -74,6 +96,13 @@ if __name__ == "__main__":
                 output = ["X1:" + str(x1), "Y1:" + str(y1), 
                           "X2:" + str(x2), "Y2:" + str(y2)]
             f.write("\t".join(output) + '\n')
+
+
+if __name__ == "__main__":
+    load_rectangles()
+    load_necrologies()
+    modified = classify()
+    modify_rectangle_file(modified)
 
     for rect in rectangles:
             print(rectangles[rect])

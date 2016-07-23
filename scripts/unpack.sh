@@ -6,7 +6,7 @@ DDJVU_NAME=$(basename "${DDJVU_FILE}" .djvu)
 PAGES=$(djvused -e n "${DDJVU_FILE}")
 DIR=${FILE_DIR}/${DDJVU_NAME}
 
-mkdir -p ${DIR}
+mkdir -p ${DIR}/flags
 
 echo "Unpacking" ${DDJVU_FILE} - PAGES ${PAGES}
 
@@ -21,7 +21,4 @@ do
     #Extracting page xml.
     djvutoxml --with-anno --with-text --page $i ${DDJVU_FILE} ${DIR}/page_$i.xml
 done
-
-#Touch flag to finish things up.
-touch ${FILE_DIR}/${DDJVU_NAME}.UNPACKED
 

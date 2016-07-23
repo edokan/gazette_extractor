@@ -5,7 +5,11 @@ from collections import OrderedDict
 import numpy as np
 import os
 
-parser = argparse.ArgumentParser(description = "")
+parser = argparse.ArgumentParser(description = 
+        """
+        Generates potential necrology rectangles.
+        """
+        )
 parser.add_argument("-f", help = "Page image input")
 parser.add_argument("-v", help = "Verbose mode", action = 'store_true', default = False)
 args = parser.parse_args()
@@ -16,6 +20,10 @@ words = []
 
 
 def load_coordinates():
+    """
+    Load word coordinates from preprocessed xml file.
+    """
+
     for line in sys.stdin:
         data = line.strip().split()
         data_type = data[0]
@@ -34,12 +42,20 @@ def load_coordinates():
 
 
 def remove_words(image):
+    """
+    Cover words on image with filled rectanges.
+    """
+
     for coord in words:
         x1, y1, x2, y2 = coord
         cv2.rectangle(image, (x1, y1), (x2, y2), 0, thickness= -1) 
 
 
 def preprocess_image(original):
+    """
+    Preprocess page image to find rectangles.
+    """
+
     image = cv2.cvtColor(original, cv2.COLOR_BGR2GRAY)
     
     ## Thresholding
@@ -55,6 +71,10 @@ def preprocess_image(original):
 
 
 def find_rectangles(original, thickened):
+    """
+    Find potential necrology coordinates and print them.
+    """
+
     rectangles = []
     (contours, _) = cv2.findContours(thickened.copy(),cv2.RETR_TREE, cv2.CHAIN_APPROX_TC89_KCOS)
 
@@ -92,7 +112,6 @@ def find_rectangles(original, thickened):
        for param in ["X1", "Y1", "X2", "Y2"]:
            sys.stdout.write(param + ":" + str(rectangle[param]) + "\t")
        sys.stdout.write("\n")
-
 
 
 if __name__ == "__main__":

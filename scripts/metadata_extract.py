@@ -1,6 +1,14 @@
 import sys
 from collections import OrderedDict
 from nltk.tokenize import word_tokenize
+import argparse
+
+parser = argparse.ArgumentParser(description = 
+        """
+        Extract metadata features from DJVU metadata.
+        """
+        )
+args = parser.parse_args()
 
 
 metadata = {}
