@@ -42,4 +42,3 @@ if __name__ == "__main__":
         else:
             sys.stdout.write(feature + ":" + features[feature] + " ")
         sys.stdout.flush()
-    # sys.stdout.write("\n")

@@ -110,7 +110,7 @@ def find_rectangles(original, thickened):
     for x1, y1, x2, y2 in rectangles:
        rectangle = {"X1":str(x1), "Y1":str(y1), "X2":str(x2), "Y2":str(y2)}
        for param in ["X1", "Y1", "X2", "Y2"]:
-           sys.stdout.write(param + ":" + str(rectangle[param]) + "\t")
+           sys.stdout.write(param + ":" + str(rectangle[param]) + " ")
        sys.stdout.write("\n")
 
 

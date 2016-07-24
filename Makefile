@@ -4,7 +4,11 @@
 #																									#
 #####################################################################################################
 
-.PHONY: all split-data train clean unpack generate classify analyze merge train-vw
+.PHONY: all clean \
+	split-data \
+	train train-unpack train-generate train-classify train-analyze train-merge train-vw
+
+.SECONDARY:
 
 SHELL = /bin/bash
 
@@ -12,14 +16,9 @@ SHELL = /bin/bash
 
 INPUT_DIR = ~/Nekrologi/ALL
 
-####################
+######################################### TARGETS ##################################################
 
-all: split-data train
-
-split-data:
-	./scripts/split_data.sh ${INPUT_DIR} TRAIN TEST
-
-######################################### TRAINING #################################################
+### TRAIN ###
 
 TRAIN_DJVU_LIST = $(wildcard TRAIN/*.djvu)
 TRAIN_UNPACK_TARGETS = $(patsubst %.djvu,\
@@ -37,65 +36,113 @@ TRAIN_ANALYZE_TARGETS = $(patsubst %.djvu,\
 TRAIN_MERGE_TARGETS = TRAIN/train.vw
 TRAIN_VW_TARGETS = TRAIN/train.model
 
-train: unpack generate classify analyze merge train-vw
+### TEST ###
+
+TEST_DJVU_LIST = $(wildcard TEST/*.djvu)
+TEST_UNPACK_TARGETS = $(patsubst %.djvu,\
+								  %/flags/UNPACK.DONE,\
+								  $(TRAIN_DJVU_LIST))
+TEST_GENERATE_TARGETS = $(patsubst %.djvu,\
+						 			%/flags/GENERATE.DONE,\
+									$(TEST_DJVU_LIST))
+TEST_CLASSIFY_TARGETS = $(patsubst %.djvu,\
+								   %/flags/CLASSIFY.DONE,\
+								   $(TEST_DJVU_LIST))
+TEST_ANALYZE_TARGETS = $(patsubst %.djvu,\
+					  			 %/flags/ANALYZE.DONE,\
+								 $(TEST_DJVU_LIST))
+TEST_MERGE_TARGETS = TEST/test.vw
+TEST_VW_TARGETS = TEST/train.predict
+
+######################################### GENERAL ##################################################
+
+all: split-data train
 clean:
 	rm -rf TRAIN/*/ \
-		   TRAIN/*.train.vw \
+		   TRAIN/*.vw \
 		   TRAIN/train.vw \
 		   TRAIN/train.model
+	
+	rm -rf TEST/*/ \
+		   TEST/*.vw \
+		   TEST/train.vw \
+		   TEST/train.model
+
+split-data:
+	./scripts/split_data.sh ${INPUT_DIR} TRAIN TEST
+
+
+####################################### COMMON RULES ###############################################
+
+### UNPACK ###
+
+%/flags/UNPACK.DONE: %.djvu
+	./scripts/unpack.sh $<
+	touch $@
+
+### GENERATE ###
+
+%/flags/GENERATE.DONE: %/flags/UNPACK.DONE
+	./scripts/generate.sh $*.djvu
+	touch $@
+
+### CLASSIFY ###
+
+%/flags/CLASSIFY.DONE: %/flags/GENERATE.DONE
+	./scripts/classify.sh $*.djvu
+	touch $@
+
+### ANALYZE
+
+%/flags/ANALYZE.DONE: %/flags/CLASSIFY.DONE
+	./scripts/analyze.sh $*.djvu
+	touch $@
+
+
+######################################### TRAINING #################################################
+
+
+train: train-vw
 		   
 
 ### 1. UNPACK ###
 
-unpack: $(TRAIN_UNPACK_TARGETS)
+train-unpack: $(TRAIN_UNPACK_TARGETS)
 	@echo "FINISHED UNPACKING ALL NEWSPAPERS"
 
-TRAIN/%/flags/UNPACK.DONE: TRAIN/%.djvu
-	./scripts/unpack.sh $<
-	touch $@
 
-################
+#################
 
 ### 2. GENERATE RECTANGLES ###
 
-generate: $(TRAIN_GENERATE_TARGETS)
+train-generate: $(TRAIN_GENERATE_TARGETS)
 	@echo "FINISHED GENERATING RECTANGLES FOR ALL NEWSPAPERS"
-
-TRAIN/%/flags/GENERATE.DONE: TRAIN/%/flags/UNPACK.DONE
-	./scripts/generate.sh TRAIN/$*.djvu
-	touch $@
 
 ##############################
 
 ### 3. CLASSIFY RECTANGLES ###
 
-classify: $(TRAIN_CLASSIFY_TARGETS)
+train-classify: $(TRAIN_CLASSIFY_TARGETS)
 	@echo "FINISHED CLASSIFYING RECTANGLES FOR ALL NEWSPAPERS"
 
-TRAIN/%/flags/CLASSIFY.DONE: TRAIN/%/flags/GENERATE.DONE
-	./scripts/classify.sh TRAIN/$*.djvu
-	touch $@
 
 ##############################
 
 ### 4. ANALYZE ###
 
-analyze: $(TRAIN_ANALYZE_TARGETS)
+train-analyze: $(TRAIN_ANALYZE_TARGETS)
 	@echo "FINISHED ANALYZING ALL NEWSPAPERS"
 
-TRAIN/%/flags/ANALYZE.DONE: TRAIN/%/flags/CLASSIFY.DONE
-	./scripts/analyze.sh TRAIN/$*.djvu
-	touch $@
 
 ##################
 
 ### 5. MERGE ###
 
-merge: TRAIN/train.vw
+train-merge: TRAIN/train.vw
 	@echo "CREATED VOWPAL WABBIT TRAINING FILE"
 
 TRAIN/train.vw: $(TRAIN_ANALYZE_TARGETS)
-	cat TRAIN/*.train.vw > TRAIN/train.vw
+	cat TRAIN/*.vw > TRAIN/train.vw
 
 ###############
 
@@ -105,7 +152,71 @@ train-vw: TRAIN/train.model
 	@echo "CREATED VOWPAL WABBIT MODEL"
 
 TRAIN/train.model: TRAIN/train.vw
-	# Here will be vowpal wabbit command to train model.
-	touch $@	
+	vw -d $< -c --passes 10 -f $@
+
+####################################################################################################
+
+
+######################################### TESTING  #################################################
+
+
+test: test-score
+		   
+
+### 1. UNPACK ###
+
+test-unpack: $(TEST_UNPACK_TARGETS)
+	@echo "FINISHED UNPACKING ALL NEWSPAPERS"
+
+#################
+
+### 2. GENERATE RECTANGLES ###
+
+test-generate: $(TEST_GENERATE_TARGETS)
+	@echo "FINISHED GENERATING RECTANGLES FOR ALL NEWSPAPERS"
+
+##############################
+
+### 3. CLASSIFY RECTANGLES ###
+
+test-classify: $(TEST_CLASSIFY_TARGETS)
+	@echo "FINISHED CLASSIFYING RECTANGLES FOR ALL NEWSPAPERS"
+
+##############################
+
+### 4. ANALYZE ###
+
+test-analyze: $(TEST_ANALYZE_TARGETS)
+	@echo "FINISHED ANALYZING ALL NEWSPAPERS"
+
+TEST/%/flags/ANALYZE.DONE: TEST/%/flags/CLASSIFY.DONE
+	./scripts/analyze.sh TEST/$*.djvu
+	touch $@
+
+##################
+
+### 5. MERGE ###
+
+test-merge: TEST/test.vw
+	@echo "CREATED VOWPAL WABBIT TRAINING FILE"
+
+TEST/test.vw: $(TEST_ANALYZE_TARGETS)
+	cat TEST/*.vw > TEST/test.vw
+
+###############
+
+### 6. POLL VOWPAL WABBIT ###
+
+test-vw: TEST/test.predict
+	@echo "FINISHED POLLING VOWPAL WABBIT"
+
+TEST/test.predict: TRAIN/train.model TEST/test.vw
+	vw -d TEST/test.vw -i TRAIN/train.model -p $@
+
+test-score: TEST/test.predict TEST/test.vw
+	paste TEST/test.predict <(cut -d" " -f 1 TEST/test.vw) | \
+		python3 scripts/score.py -t 0.2 \
+		> TEST/test.result
+
 
 ####################################################################################################

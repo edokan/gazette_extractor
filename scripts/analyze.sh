@@ -18,23 +18,22 @@ do
        > $DIR/page_$i.graphic_features.vw
 
    #Extract text features
-   python3 scripts/text_features_extractor.py -pc $DIR/page_$i.rect \
-       < $DIR/page_$i.xml_cleaned \
-       > $DIR/page_$i.text_features.vw
+   #python3 scripts/text_features_extractor.py -pc $DIR/page_$i.rect \
+       #< $DIR/page_$i.xml_cleaned \
+       #> $DIR/page_$i.text_features.vw
 
    #Merge all page's features into one file.
 
    
-   paste $DIR/page_$i.classes \
-       <(paste \
+   paste -d" " $DIR/page_$i.classes \
+       <(paste -d" "\
            $DIR/page_$i.rect \
            $DIR/page_$i.graphic_features.vw \
-           $DIR/page_$i.text_features.vw \
            | \
-           sed "s,^,| ${DDJVU_NAME}.djvu\t$(cat $DIR/metadata.vw)\tPAGE:$i\t,g" ) \
-           > $DIR/page_$i.train.vw
+           sed "s,^,| ${DDJVU_NAME}.djvu $(cat $DIR/metadata.vw) PAGE:$i ,g" ) \
+           > $DIR/page_$i.features.vw
 
 done
 
 #Merge all pages features into one file.
-cat `ls -v $DIR/page_*.train.vw` > ${FILE_DIR}/${DDJVU_NAME}.train.vw
+cat `ls -v $DIR/page_*.features.vw` > ${FILE_DIR}/${DDJVU_NAME}.vw
