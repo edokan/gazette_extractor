@@ -10,7 +10,9 @@ parser = argparse.ArgumentParser(description =
         Generates potential necrology rectangles.
         """
         )
-parser.add_argument("-f", help = "Page image input")
+parser.add_argument("-f", help = "Page image input", required = True)
+parser.add_argument("-l", help = "Lower bound of possible rectangle", type = int, required = True)
+parser.add_argument("-u", help = "Upper bound of possible rectangle", type = int, required = True)
 parser.add_argument("-v", help = "Verbose mode", action = 'store_true', default = False)
 args = parser.parse_args()
 
@@ -85,7 +87,7 @@ def find_rectangles(original, thickened):
         x1, y1, x2, y2 = x, y, x + w, y + h
         roi = original[y1:y2 + 1, x1:x2 + 1]
         height, width, channels = roi.shape
-        if height > 10 and width > 10:
+        if (height > args.l and width > args.l) and (height < args.u and width < args.u):
             rectangles.append((x, y, x + w, y + h))
 
     if args.v:
@@ -99,9 +101,9 @@ def find_rectangles(original, thickened):
         for x1, y1, x2, y2 in rectangles:
             height = y2 - y1
             width = x2 - x1
-            if height > 30 and width > 30:
-                cv2.imwrite(rect_dir + "/" + str(x1) + "_" + str(y1) + "_" + str(x2) + "_" + str(y2) + ".tiff", original[y1:y2 + 1, x1:x2 + 1])
-                enum += 1
+            filename = rect_dir + "/" + str(x1) + "_" + str(y1) + "_" + str(x2) + "_" + str(y2) + ".tiff"
+            cv2.imwrite(filename, original[y1:y2 + 1, x1:x2 + 1])
+            enum += 1
             cv2.rectangle(rect_image, (x1, y1), (x2, y2), (255,0,0) ,5)
 
         cv2.imwrite(rect_output, rect_image)

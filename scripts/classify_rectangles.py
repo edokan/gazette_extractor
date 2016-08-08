@@ -22,10 +22,9 @@ def load_rectangles():
     """
     Loads rectangles' coordinates from file.
     """
-
     with open(args.r, 'r') as f:
         for line in f:
-            x1, y1, x2, y2 = [int(c.split(":")[1]) for c in line.split()]
+            x1, y1, x2, y2 = [int(c.split(":")[1]) for c in line.strip().split()]
             rectangles[(x1, y1, x2, y2)] = 0
 
 
@@ -104,5 +103,5 @@ if __name__ == "__main__":
     modify_rectangle_file(modified)
 
     for rect in rectangles:
-            print(rectangles[rect])
+            print(rectangles.get(rect, -1))
 

@@ -215,7 +215,7 @@ TEST/test.predict: TRAIN/train.model TEST/test.vw
 
 test-score: TEST/test.predict TEST/test.vw
 	paste TEST/test.predict <(cut -d" " -f 1 TEST/test.vw) | \
-		python3 scripts/score.py -t 0.2 \
+		python3 scripts/score.py \
 		> TEST/test.result
 
 

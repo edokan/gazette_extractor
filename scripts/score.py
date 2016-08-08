@@ -7,7 +7,7 @@ parser = argparse.ArgumentParser(description =
         Input: stdin input of two columns separated by whitespace.
         """
         )
-parser.add_argument("-t", help = "Threshold", type = float, required = True)
+# parser.add_argument("-t", help = "Threshold", type = float, required = True)
 args = parser.parse_args()
 
 
@@ -19,10 +19,10 @@ def calculate_score():
     recall_denominator = 0
     for line in sys.stdin:
         p, t = [float(x) for x in line.strip().split()]
-        if p >= args.t and t == 1:
+        if p >= 0 and t == 1:
             precision_numerator += 1
             recall_numerator += 1
-        if p >= args.t:
+        if p >= 0:
             precision_denominator += 1
         if t == 1:
             recall_denominator += 1
