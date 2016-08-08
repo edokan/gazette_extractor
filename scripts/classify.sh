@@ -13,6 +13,7 @@ for i in $(seq 1 $PAGES)
 do
 
    #Classify potential necro rectangles
+   
    python scripts/classify_rectangles.py \
        -n $NECRO_FILE \
        -r $DIR/page_$i.rect \

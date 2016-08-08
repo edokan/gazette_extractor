@@ -23,7 +23,7 @@ def load_rectangles():
     Loads rectangles' coordinates from file.
     """
 
-    with open(args.r) as f:
+    with open(args.r, 'r') as f:
         for line in f:
             x1, y1, x2, y2 = [int(c.split(":")[1]) for c in line.split()]
             rectangles[(x1, y1, x2, y2)] = 0
@@ -34,10 +34,9 @@ def load_necrologies():
     Load necrologies' coordinates from file.
     """
 
-    with open(args.n) as f:
+    with open(args.n, 'r') as f:
         for line in f:
             necrologies.append(tuple([int(c) for c in line.strip().split()]))
-
 
 def check_if_near(necrology, rectangle):
     """

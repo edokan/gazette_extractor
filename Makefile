@@ -14,7 +14,7 @@ SHELL = /bin/bash
 
 ### CONFIGURE ME ###
 
-INPUT_DIR = ~/Nekrologi/ALL
+INPUT_DIR = /home/alvis/Studia/necros
 
 ######################################### TARGETS ##################################################
 
