@@ -14,6 +14,9 @@ do
 
    #Classify potential necro rectangles
 
+
+   echo "python scripts/classify_rectangles.py -n $NECRO_FILE -r $DIR/page_$i.rect -i $i > $DIR/page_$i.classes"
+
    python scripts/classify_rectangles.py \
        -n $NECRO_FILE \
        -r $DIR/page_$i.rect \

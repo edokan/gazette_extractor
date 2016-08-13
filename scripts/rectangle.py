@@ -78,17 +78,22 @@ def find_rectangles(original, thickened):
     """
 
     rectangles = []
-    (contours, _) = cv2.findContours(thickened.copy(),cv2.RETR_TREE, cv2.CHAIN_APPROX_TC89_KCOS)
+    contours, hierarchy = cv2.findContours(thickened.copy(),cv2.RETR_TREE, cv2.CHAIN_APPROX_TC89_KCOS)
 
     rect_image = original.copy()
+    unimportant_rect = set()
 
     for i, cnt in enumerate(contours):
-        x, y, w, h = cv2.boundingRect(cnt)
-        x1, y1, x2, y2 = x, y, x + w, y + h
-        roi = original[y1:y2 + 1, x1:x2 + 1]
-        height, width, channels = roi.shape
-        if (height > args.l and width > args.l) and (height < args.u and width < args.u):
-            rectangles.append((x, y, x + w, y + h))
+        if hierarchy[0, i, 3] == -1:
+            x, y, w, h = cv2.boundingRect(cnt)
+            x1, y1, x2, y2 = x, y, x + w, y + h
+            roi = original[y1:y2 + 1, x1:x2 + 1]
+            height, width, channels = roi.shape
+            if (height > args.l and width > args.l) and (height < args.u and width < args.u):
+                if hierarchy[0, i, 3] == -1 or (i in unimportant_rect):
+                    rectangles.append((x, y, x + w, y + h))
+            else:
+                unimportant_rect.add(i)
 
     if args.v:
         rect_output = args.f.strip(".tiff") + ".rect.tiff"
