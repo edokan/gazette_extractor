@@ -96,9 +96,9 @@ def find_rectangles(original, thickened):
                 unimportant_rect.add(i)
 
     if args.v:
-        rect_output = args.f.strip(".tiff") + ".rect.tiff"
-        skel_output = args.f.strip(".tiff") + ".skel.tiff"
-        rect_dir = args.f.strip(".tiff")
+        rect_output = args.f.replace(".tiff", ".rect.tiff")
+        skel_output = args.f.replace(".tiff", "skel.tiff")
+        rect_dir = args.f.replace(".tiff", "")
         if not os.path.exists(rect_dir):
             os.makedirs(rect_dir)
 

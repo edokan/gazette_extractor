@@ -43,8 +43,8 @@ TEST_UNPACK_TARGETS = $(patsubst %.djvu,\
 								  test-A/%/flags/UNPACK.DONE,\
 								  $(TEST_DJVU_LIST))
 TEST_GENERATE_TARGETS = $(patsubst %.djvu,\
-						 			test-A/%/flags/GENERATE.DONE,\
-									$(TEST_DJVU_LIST))
+								  test-A/%/flags/GENERATE.DONE,\
+								  $(TEST_DJVU_LIST))
 TEST_ANALYZE_TARGETS = $(patsubst %.djvu,\
 					  			  test-A/%/flags/ANALYZE_TEST.DONE,\
 								  $(TEST_DJVU_LIST))
@@ -69,7 +69,7 @@ clean:
 		   dev-0/train.model
 	
 	rm -rf test-A/*/ \
-		   test-a/*.vw \
+		   test-A/*.vw \
 		   test-A/*.predict \
 		   test-A/*.out.tsv \
 		   test-A/out.tsv
@@ -166,11 +166,11 @@ train-analyze: $(TRAIN_ANALYZE_TARGETS)
 
 ### 5. MERGE ###
 
-train-merge: dev-0/train.vw
+train-merge: dev-0/train.in
 	@echo "CREATED VOWPAL WABBIT TRAINING FILE"
 
-dev-0/train.vw: $(TRAIN_ANALYZE_TARGETS)
-	cat dev-0/*.vw > dev-0/train.vw
+dev-0/train.in: $(TRAIN_ANALYZE_TARGETS)
+	cat dev-0/*.vw > dev-0/train.in
 
 ###############
 
@@ -179,7 +179,7 @@ dev-0/train.vw: $(TRAIN_ANALYZE_TARGETS)
 train-vw: dev-0/train.model
 	@echo "CREATED VOWPAL WABBIT MODEL"
 
-dev-0/train.model: dev-0/train.vw
+dev-0/train.model: dev-0/train.in
 	vw -d $< -c --passes 10 -f $@
 
 ####################################################################################################
@@ -229,7 +229,7 @@ test-extract: $(TEST_EXTRACT_TARGETS)
 ### 6. MERGE ###
 
 test-merge: test-A/out.tsv
-	@echo "CREATED VOWPAL WABBIT TRAINING FILE"
+	@echo "FINISHED TESTING"
 
 test-A/out.tsv: $(TEST_EXTRACT_TARGETS)
 	cat test-A/*.out.tsv | python3 ./scripts/merge_necro.py -i test-A/in.tsv > test-A/out.tsv
