@@ -35,4 +35,7 @@ def parse_vector(line):
 if __name__ == "__main__":
     extract_necro()
     djvu = args.i.split("/")[-1].strip(".vw") + ".djvu"
-    print(djvu + "\t" + " ".join(necrologies))
+    necro_string = " ".join(necrologies)
+    if necro_string.strip() == "":
+        necro_string = "NULL"
+    print(djvu + "\t" + necro_string)

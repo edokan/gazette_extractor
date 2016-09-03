@@ -14,6 +14,8 @@ necrologies = {}
 def load_input():
     for line in sys.stdin:
         djvu, necro = line.strip().split("\t")
+        if necro == "NULL":
+            necro = ""
         necrologies[djvu] = necro
 
 

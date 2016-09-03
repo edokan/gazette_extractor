@@ -1,5 +1,6 @@
 import sys
 import argparse
+import os.path
 
 parser = argparse.ArgumentParser(
         description = 
@@ -16,8 +17,9 @@ if __name__ == "__main__":
     with open(args.i) as in_file, open(args.e) as expected_file:
         for in_line, expected_line in zip(in_file, expected_file):
             filename = args.o + "/" + in_line.rstrip(".djvu\n") + ".necro"
-            with open(filename, 'w') as necro_file:
-                necro_file.write(expected_line.strip() + "\n")
+            if not os.path.exists(filename): 
+                with open(filename, 'w') as necro_file:
+                    necro_file.write(expected_line.strip() + "\n")
 
 
 

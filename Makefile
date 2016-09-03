@@ -6,7 +6,9 @@
 
 .PHONY: all clean \
 	split-data \
-	train split-necro train-unpack train-generate train-classify train-analyze train-merge train-vw
+	clean purge train-clean train-purge test-clean test-purge \
+	train train-split train-unpack train-generate train-classify train-analyze train-merge train-vw \
+	test test-unpack test-generate test-analyze test-predict test-merge
 
 .SECONDARY:
 
@@ -21,6 +23,9 @@ INPUT_DIR = /home/alvis/Studia/necros
 ### TRAIN ###
 
 TRAIN_DJVU_LIST = $(shell cat dev-0/in.tsv)
+TRAIN_SPLIT_TARGETS = $(patsubst %.djvu,\
+								  dev-0/%.necro,\
+								  $(TRAIN_DJVU_LIST))
 TRAIN_UNPACK_TARGETS = $(patsubst %.djvu,\
 								  dev-0/%/flags/UNPACK.DONE,\
 								  $(TRAIN_DJVU_LIST))
@@ -61,18 +66,28 @@ TEST_VW_TARGETS = test-A/train.predict
 
 all: train test
 
-clean:
+
+train-purge:
 	rm -rf dev-0/*/ \
 		   dev-0/*.necro \
 		   dev-0/*.vw \
-		   dev-0/train.vw \
-		   dev-0/train.model
+		   dev-0/train.* 
+train-clean:
+	rm -rf dev-0/train.*
 	
+test-purge:
 	rm -rf test-A/*/ \
 		   test-A/*.vw \
 		   test-A/*.predict \
 		   test-A/*.out.tsv \
 		   test-A/out.tsv
+test-clean:
+	rm -rf test-A/*.out.tsv \
+		   test-A/out.tsv
+
+purge: train-purge test-purge
+
+clean: train-clean test-clean
 
 split-data:
 	./scripts/split_data.sh ${INPUT_DIR} TRAIN TEST
@@ -94,7 +109,7 @@ split-data:
 
 ### CLASSIFY ###
 
-%/flags/CLASSIFY.DONE: split-necro %/flags/GENERATE.DONE
+%/flags/CLASSIFY.DONE: %.necro %/flags/GENERATE.DONE
 	./scripts/classify.sh $*.djvu
 	touch $@
 
@@ -116,7 +131,7 @@ split-data:
 	vw -d $*.vw -i dev-0/train.model -p $*.predict
 	touch $@
 
-### PREDICT ###
+### EXTRACT ###
 
 %/flags/EXTRACT.DONE: %/flags/PREDICT.DONE
 	python3 ./scripts/extract_necro.py -i $*.vw -p $*.predict > $*.out.tsv
@@ -129,7 +144,7 @@ train: train-vw
 
 ### 0. SPLIT NECRO ###
 
-split-necro:
+train-split:
 	python3 ./scripts/split_necro.py -i dev-0/in.tsv -e dev-0/expected.tsv -o dev-0
 
 ######################

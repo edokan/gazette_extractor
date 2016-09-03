@@ -11,26 +11,39 @@ Summary:
 
 in progress
 
+How to train:
 
-Scripts:
+1) make train-split
+
+Split data into separate files for multiprocessing in the future.
+
+2) make train -j X
+
+Train model analyzing X papers at the same time.
 
 
-a) Makefile - mothership script. It runs everything!
+How to re-train model (ie. after adding more newspapers):
 
-b) unpack.sh - unpacks djvu file (metadata, tiff, xml)
 
-c) analyze.sh - script that analyzes a newspaper, uses:
+1) make train-clean
 
-    - metadata_extract.py - extracts vector info from djvu metadata
+Cleans some files to create them anew.
 
-    - xml_cleaner.py - cleans xml from faulty chars
+2) make train-split
 
-    - xml_extract.py - extracts word, line and paragraph coordinates from xml
+3) make train -j X
 
-    - rectangle.py - creates potential necro rectangles
 
-    - graphic_features_extractor.py - extracts graphic features from generated rectangles
+How to test:
 
-    - text_features_extractor.py - extracts text features from generated rectangles
 
-    - detect_peaks.py - used in graphic_features_extractor.py (imported)
+1) make test -j X
+
+Test model analyzing X papers at the same time.
+
+
+How to remove everything:
+
+- make train-purge
+- make test-purge
+- make purge = train-purge + test-purge
