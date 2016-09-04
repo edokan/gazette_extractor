@@ -54,8 +54,8 @@ def check_paragraph(para_xml):
 def create_output():
     """Prints out the final output
     """
-    print("PARAGRAPH\t" + str(para_begin_end[0][0]) + " " + str(para_begin_end[0][1]) + " " + str(para_begin_end[-1][2]) + " " + str(para_begin_end[-1][3]))
-    for records in output_words_lines : print(records)
+    sys.stdout.write("PARAGRAPH\t" + str(para_begin_end[0][0]) + " " + str(para_begin_end[0][1]) + " " + str(para_begin_end[-1][2]) + " " + str(para_begin_end[-1][3]) + "\n")
+    for records in output_words_lines : sys.stdout.write(records + "\n")
 
 def create_words_lines_output(coordinates_words):
     """Function which helps in making data for lines and words
@@ -70,7 +70,7 @@ def create_words_lines_output(coordinates_words):
     for key, value in coordinates_words.items():
         keys = []
         for k in key: keys.append(k)
-        output_words_lines.append("WORD\t" + ' '.join(keys) + "\t" + value)
+        output_words_lines.append("WORD\t" + ' '.join(keys) + ' ' + value)
 
 def get_words_xml(line_xml):
     """Get words from .xml
@@ -87,7 +87,8 @@ def get_words_xml(line_xml):
             y1 = coordinates[1]
             x2 = coordinates[2]
             y2 = coordinates[3]
-            if (word.text != None) : coordinates_word[x1,y1,x2,y2] = word.text
+            if (word.text != None) :
+                coordinates_word[x1,y1,x2,y2] = word.text.lstrip().rstrip()
     if coordinates_word : create_words_lines_output(coordinates_word)
 
 def get_lines_xml(para_xml):
