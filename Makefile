@@ -17,7 +17,7 @@ SHELL = /bin/bash
 ### CONFIGURE ME ###
 
 INPUT_DIR = ~/Nekrologi
-KENLM_DIR = ~
+KENLM_BIN = ~/kenlm/build/bin
 
 ######################################### TARGETS ##################################################
 
@@ -72,15 +72,13 @@ train-purge:
 	rm -rf dev-0/*/ \
 		   dev-0/*.necro \
 		   dev-0/*.vw \
-		   dev-0/train.* 
-
-	rm -rf LM/*.txt \
-		LM/necrologies_lm.* \
-		LM/*.DONE
+		   dev-0/train.* \
+		   LM/*.txt \
+		   LM/necrologies_lm.* \
+		   LM/*.DONE
 
 train-clean:
 	rm -rf dev-0/train.*
-
 	rm -rf LM/*.txt \
 		LM/necrologies_lm.* \
 		LM/*.DONE
@@ -125,20 +123,20 @@ split-data:
 
 ### CREATE CORPUS ###                                                                                                                               
  
-LM/LM.CORPORA.DONE: train-generate
+LM/LM.CORPORA.DONE: $(TRAIN_GENERATE_TARGETS)
 	./scripts/create_corpus.sh $(TRAIN_DJVU_LIST)
 	touch $@
 
 ### CREATE .ARPA ###                                                                                                                                
  
 LM/LM.ARPA.DONE: LM/LM.CORPORA.DONE
-	cat LM/corpus_necrologies.txt | $(KENLM_DIR)/kenlm/bin/lmplz -S 1G --discount_fallback -o 3 > LM/necrologies_lm.arpa
+	cat LM/corpus_necrologies.txt | $(KENLM_BIN)/lmplz -S 1G --discount_fallback -o 3 > LM/necrologies_lm.arpa
 	touch $@
 
 ### CREATE BINARY ###                                                                                                                              
  
 LM/LM.BINARY.DONE: LM/LM.ARPA.DONE
-	$(KENLM_DIR)/kenlm/bin/build_binary LM/necrologies_lm.arpa LM/necrologies_lm.klm
+	$(KENLM_BIN)/build_binary LM/necrologies_lm.arpa LM/necrologies_lm.klm
 	touch $@
 
 
