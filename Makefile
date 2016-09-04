@@ -7,7 +7,7 @@
 .PHONY: all clean \
 	split-data \
 	clean purge train-clean train-purge test-clean test-purge \
-	train train-split train-unpack train-generate train-classify train-analyze train-merge train-vw \
+	train train-split train-unpack train-generate train-classify train-lm train-analyze train-merge train-vw \
 	test test-unpack test-generate test-analyze test-predict test-merge
 
 .SECONDARY:
@@ -16,7 +16,8 @@ SHELL = /bin/bash
 
 ### CONFIGURE ME ###
 
-INPUT_DIR = /home/alvis/Studia/necros
+INPUT_DIR = ~/Nekrologi
+KENLM_DIR = ~
 
 ######################################### TARGETS ##################################################
 
@@ -72,9 +73,18 @@ train-purge:
 		   dev-0/*.necro \
 		   dev-0/*.vw \
 		   dev-0/train.* 
+
+	rm -rf LM/*.txt \
+		LM/necrologies_lm.* \
+		LM/*.DONE
+
 train-clean:
 	rm -rf dev-0/train.*
-	
+
+	rm -rf LM/*.txt \
+		LM/necrologies_lm.* \
+		LM/*.DONE
+
 test-purge:
 	rm -rf test-A/*/ \
 		   test-A/*.vw \
@@ -113,9 +123,28 @@ split-data:
 	./scripts/classify.sh $*.djvu
 	touch $@
 
+### CREATE CORPUS ###                                                                                                                               
+ 
+LM/LM.CORPORA.DONE: train-generate
+	./scripts/create_corpus.sh $(TRAIN_DJVU_LIST)
+	touch $@
+
+### CREATE .ARPA ###                                                                                                                                
+ 
+LM/LM.ARPA.DONE: LM/LM.CORPORA.DONE
+	cat LM/corpus_necrologies.txt | $(KENLM_DIR)/kenlm/bin/lmplz -S 1G --discount_fallback -o 3 > LM/necrologies_lm.arpa
+	touch $@
+
+### CREATE BINARY ###                                                                                                                              
+ 
+LM/LM.BINARY.DONE: LM/LM.ARPA.DONE
+	$(KENLM_DIR)/kenlm/bin/build_binary LM/necrologies_lm.arpa LM/necrologies_lm.klm
+	touch $@
+
+
 ### ANALYZE TRAIN ###
 
-%/flags/ANALYZE_TRAIN.DONE: %/flags/CLASSIFY.DONE
+%/flags/ANALYZE_TRAIN.DONE: LM/LM.BINARY.DONE %/flags/CLASSIFY.DONE
 	./scripts/analyze_train.sh $*.djvu
 	touch $@
 
@@ -140,7 +169,7 @@ split-data:
 ######################################### TRAINING #################################################
 
 
-train: train-vw
+train: train-split train-unpack train-generate train-lm train-vw
 
 ### 0. SPLIT NECRO ###
 
@@ -171,7 +200,11 @@ train-classify: train-generate $(TRAIN_CLASSIFY_TARGETS)
 
 ##############################
 
-### 4. ANALYZE ###
+### 4. TRAIN LM ###                                                                                                                                   
+train-lm: LM/LM.BINARY.DONE
+	@echo "TRAINED LM"
+
+### 5. ANALYZE ###
 
 train-analyze: $(TRAIN_ANALYZE_TARGETS)
 	@echo "FINISHED ANALYZING ALL NEWSPAPERS"
@@ -179,7 +212,7 @@ train-analyze: $(TRAIN_ANALYZE_TARGETS)
 
 ##################
 
-### 5. MERGE ###
+### 6. MERGE ###
 
 train-merge: dev-0/train.in
 	@echo "CREATED VOWPAL WABBIT TRAINING FILE"
@@ -189,7 +222,7 @@ dev-0/train.in: $(TRAIN_ANALYZE_TARGETS)
 
 ###############
 
-### 6. TRAIN VOWPAL WABBIT ###
+### 7. TRAIN VOWPAL WABBIT ###
 
 train-vw: dev-0/train.model
 	@echo "CREATED VOWPAL WABBIT MODEL"
