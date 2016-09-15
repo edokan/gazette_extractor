@@ -23,24 +23,24 @@ KENLM_BIN = ~/kenlm/build/bin
 
 ### TRAIN ###
 
-TRAIN_DJVU_LIST = $(shell cat dev-0/in.tsv)
+TRAIN_DJVU_LIST = $(shell cat train/in.tsv | cut -f1)
 TRAIN_SPLIT_TARGETS = $(patsubst %.djvu,\
-								  dev-0/%.necro,\
+								  train/%.necro,\
 								  $(TRAIN_DJVU_LIST))
 TRAIN_UNPACK_TARGETS = $(patsubst %.djvu,\
-								  dev-0/%/flags/UNPACK.DONE,\
+								  train/%/flags/UNPACK.DONE,\
 								  $(TRAIN_DJVU_LIST))
 TRAIN_GENERATE_TARGETS = $(patsubst %.djvu,\
-						 			dev-0/%/flags/GENERATE.DONE,\
+						 			train/%/flags/GENERATE.DONE,\
 									$(TRAIN_DJVU_LIST))
 TRAIN_CLASSIFY_TARGETS = $(patsubst %.djvu,\
-								   dev-0/%/flags/CLASSIFY.DONE,\
+								   train/%/flags/CLASSIFY.DONE,\
 								   $(TRAIN_DJVU_LIST))
 TRAIN_ANALYZE_TARGETS = $(patsubst %.djvu,\
-					  			 dev-0/%/flags/ANALYZE_TRAIN.DONE,\
+					  			 train/%/flags/ANALYZE_TRAIN.DONE,\
 								 $(TRAIN_DJVU_LIST))
-TRAIN_MERGE_TARGETS = dev-0/train.vw
-TRAIN_VW_TARGETS = dev-0/train.model
+TRAIN_MERGE_TARGETS = train/train.vw
+TRAIN_VW_TARGETS = train/train.model
 
 ### TEST ###
 
@@ -69,16 +69,16 @@ all: train test
 
 
 train-purge:
-	rm -rf dev-0/*/ \
-		   dev-0/*.necro \
-		   dev-0/*.vw \
-		   dev-0/train.* \
+	rm -rf train/*/ \
+		   train/*.necro \
+		   train/*.vw \
+		   train/train.* \
 		   LM/*.txt \
 		   LM/necrologies_lm.* \
 		   LM/*.DONE
 
 train-clean:
-	rm -rf dev-0/train.*
+	rm -rf train/train.*
 	rm -rf LM/*.txt \
 		LM/necrologies_lm.* \
 		LM/*.DONE
@@ -124,7 +124,7 @@ split-data:
 ### CREATE CORPUS ###                                                                                                                               
  
 LM/LM.CORPORA.DONE: $(TRAIN_GENERATE_TARGETS)
-	./scripts/create_corpus.sh $(TRAIN_DJVU_LIST)
+	./scripts/create_corpus.sh "$(TRAIN_DJVU_LIST)"
 	touch $@
 
 ### CREATE .ARPA ###                                                                                                                                
@@ -136,7 +136,7 @@ LM/LM.ARPA.DONE: LM/LM.CORPORA.DONE
 ### CREATE BINARY ###                                                                                                                              
  
 LM/LM.BINARY.DONE: LM/LM.ARPA.DONE
-	$(KENLM_BIN)/build_binary LM/necrologies_lm.arpa LM/necrologies_lm.klm
+	$(KENLM_BIN)/build_binary -s LM/necrologies_lm.arpa LM/necrologies_lm.klm
 	touch $@
 
 
@@ -167,12 +167,12 @@ LM/LM.BINARY.DONE: LM/LM.ARPA.DONE
 ######################################### TRAINING #################################################
 
 
-train: train-split train-unpack train-generate train-lm train-vw
+train: train-unpack train-generate train-lm train-vw
 
 ### 0. SPLIT NECRO ###
 
 train-split:
-	python3 ./scripts/split_necro.py -i dev-0/in.tsv -e dev-0/expected.tsv -o dev-0
+	python3 ./scripts/split_necro.py -i train/in.tsv -o train
 
 ######################
 		   
@@ -212,20 +212,20 @@ train-analyze: $(TRAIN_ANALYZE_TARGETS)
 
 ### 6. MERGE ###
 
-train-merge: dev-0/train.in
+train-merge: train/train.in
 	@echo "CREATED VOWPAL WABBIT TRAINING FILE"
 
-dev-0/train.in: $(TRAIN_ANALYZE_TARGETS)
-	cat dev-0/*.vw > dev-0/train.in
+train/train.in: $(TRAIN_ANALYZE_TARGETS)
+	cat train/*.vw > train/train.in
 
 ###############
 
 ### 7. TRAIN VOWPAL WABBIT ###
 
-train-vw: dev-0/train.model
+train-vw: train/train.model
 	@echo "CREATED VOWPAL WABBIT MODEL"
 
-dev-0/train.model: dev-0/train.in
+train/train.model: train/train.in
 	vw -d $< -c --passes 10 -f $@
 
 ####################################################################################################
