@@ -84,16 +84,16 @@ def find_rectangles(original, thickened):
     unimportant_rect = set()
 
     for i, cnt in enumerate(contours):
-        if hierarchy[0, i, 3] == -1:
-            x, y, w, h = cv2.boundingRect(cnt)
-            x1, y1, x2, y2 = x, y, x + w, y + h
-            roi = original[y1:y2 + 1, x1:x2 + 1]
-            height, width, channels = roi.shape
-            if (height > args.l and width > args.l) and (height < args.u and width < args.u):
-                if hierarchy[0, i, 3] == -1 or (i in unimportant_rect):
-                    rectangles.append((x, y, x + w, y + h))
-            else:
-                unimportant_rect.add(i)
+        # if hierarchy[0, i, 3] == -1:
+        x, y, w, h = cv2.boundingRect(cnt)
+        x1, y1, x2, y2 = x, y, x + w, y + h
+        roi = original[y1:y2 + 1, x1:x2 + 1]
+        height, width, channels = roi.shape
+        if (height > args.l and width > args.l) and (height < args.u and width < args.u):
+            # if hierarchy[0, i, 3] == -1 or (i in unimportant_rect):
+            rectangles.append((x, y, x + w, y + h))
+        else:
+            unimportant_rect.add(i)
 
     if args.v:
         rect_output = args.f.replace(".tiff", ".rect.tiff")

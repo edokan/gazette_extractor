@@ -12,6 +12,7 @@ parser = argparse.ArgumentParser(description =
 parser.add_argument("-n", help = "File with necro coordinates", required = True)
 parser.add_argument("-r", help = "File with generated rectangles", required = True)
 parser.add_argument("-i", help = "Page number", type = int, required = True)
+parser.add_argument("-e", help = "Tolerance error", type = int, default = 50)
 args = parser.parse_args()
 
 rectangles = OrderedDict()
@@ -36,46 +37,52 @@ def load_necrologies():
     with open(args.n, 'r') as f:
         line = f.readline().strip()
         for necro in line.split():
-            page, coordinates, error = necro.split("/")
+            page, coordinates = necro.split("/")
             x1, y1, x2, y2 = [int(n) for n in coordinates.split(",")]
-            necrologies.append((int(page), x1, y1, x2, y2, int(error)))
+            necrologies.append((int(page), x1, y1, x2, y2))
 
 
-def check_if_near(necrology, rectangle):
+def check_error(necrology, rectangle):
     """
-    Check if coordinates of rectangle are near enough a necrology.
-    If so, we tag rectangle as necrology.
+    Check coordinates of rectangle error (how near it is to necrology).
+    Return error value of all 4 nodes.
     """
     
-    n_page, n_x1, n_y1, n_x2, n_y2, error = necrology
+    n_page, n_x1, n_y1, n_x2, n_y2 = necrology
     r_x1, r_y1, r_x2, r_y2 = rectangle
 
-    if (n_x1 - error <= r_x1 <= n_x1 + error and
-        n_y1 - error <= r_y1 <= n_y1 + error and
-        n_x2 - error <= r_x2 <= n_x2 + error and
-        n_y2 - error <= r_y2 <= n_y2 + error):
-        return True
-    else:
-        return False
+    error = 0
+    error += abs(n_x1 - r_x1)
+    error += abs(n_y1 - r_y1)
+    error += abs(n_x2 - r_y2)
+    error += abs(n_y2 - r_y2)
+
+    return error
 
 def classify():
     """
-    Tag all rectangles with classes based on necrologies coordinates.
+    Tag all rectangles with classes based on necrologies' coordinates.
     """
 
     modified = False
     for necro in necrologies:
-        page, x1, y1, x2, y2, error = necro
+        # print >> sys.stderr, "NECRO: " + str(necro)
+        page, x1, y1, x2, y2 = necro
         if page != args.i:
             continue
         found = False
+        rect_error = {}
         for rec in rectangles:
-            if check_if_near(necro, rec):
-                rectangles[rec] = 1
-                found = True
-                break
+            rect_error[rec] = check_error(necro, rec)
+            nearest = min(rect_error, key=rect_error.get)
+            # print >> sys.stderr, rect_error[nearest]
+            # print >> sys.stderr, float(rect_error[nearest]) / 4
+        if float(rect_error[nearest]) / 4 < float(args.e):
+            # print >> sys.stderr, "FOUND IT"
+            rectangles[nearest] = 1
+            found = True
         if not found:
-            rectangles[necro[1:-1]] = 1
+            rectangles[necro[1:]] = 1
             modified = True
     return modified
 
@@ -86,6 +93,7 @@ def modify_rectangle_file(modified):
     """
     
     if modified:
+        print >> sys.stderr, "MODIFIED!"
         with open(args.r, 'w') as f:
             for rect in rectangles:
                 x1, y1, x2, y2 = rect
@@ -101,5 +109,5 @@ if __name__ == "__main__":
     modify_rectangle_file(modified)
 
     for rect in rectangles:
-            print(rectangles.get(rect, -1))
+        print(rectangles.get(rect, -1))
 
