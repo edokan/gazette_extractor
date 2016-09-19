@@ -27,7 +27,7 @@ if __name__ == "__main__":
         for line in necrologues_data:
             for necrologue_data in line.split(" "):
                 data = necrologue_data.split("/")
-                if len(data) == 3 : 
+                if len(data) == 2 : 
                     coordinates = data[1]
                     page = data[0]
                     necrologue[coordinates] = page
