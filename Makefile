@@ -18,6 +18,7 @@ SHELL = /bin/bash
 
 INPUT_DIR = ~/Nekrologi
 KENLM_BIN = ~/kenlm/build/bin
+VOWPAL_WABBIT_DIR = ~/vowpal_wabbit/vowpalwabbit
 
 ######################################### TARGETS ##################################################
 
@@ -45,7 +46,7 @@ TRAIN_VW_TARGETS = train/train.model
 ### TEST ###
 
 TEST_DJVU_LIST = $(shell cat test-A/in.tsv)
-TEST_UNPACK_TARGETS = $(patsubst %.djvu,\
+TEST_UNPACK_TARGETS= $(patsubst %.djvu,\
 								  test-A/%/flags/UNPACK.DONE,\
 								  $(TEST_DJVU_LIST))
 TEST_GENERATE_TARGETS = $(patsubst %.djvu,\
@@ -92,6 +93,18 @@ test-purge:
 test-clean:
 	rm -rf test-A/*.out.tsv \
 		   test-A/out.tsv
+
+clean-unpack:
+	rm -rf $(TRAIN_UNPACK_TARGETS)
+
+clean-generate:
+	rm -rf $(TRAIN_GENERATE_TARGETS)
+
+clean-classify:
+	rm -rf $(TRAIN_CLASSIFY_TARGETS)
+
+clean-analyze:
+	rm -rf $(TRAIN_ANALYZE_TARGETS)
 
 purge: train-purge test-purge
 
@@ -154,8 +167,8 @@ LM/LM.BINARY.DONE: LM/LM.ARPA.DONE
 
 ### PREDICT ###
 
-%/flags/PREDICT.DONE: dev-0/train.model %/flags/ANALYZE_TEST.DONE
-	vw -d $*.vw -i dev-0/train.model -p $*.predict
+%/flags/PREDICT.DONE: train/train.model %/flags/ANALYZE_TEST.DONE
+	$(VOWPAL_WABBIT_DIR)/vw -d $*.vw -i train/train.model -p $*.predict
 	touch $@
 
 ### EXTRACT ###
@@ -226,7 +239,7 @@ train-vw: train/train.model
 	@echo "CREATED VOWPAL WABBIT MODEL"
 
 train/train.model: train/train.in
-	vw -d $< -c --passes 10 -f $@
+	$(VOWPAL_WABBIT_DIR)/vw -d $< -c --passes 10 -f $@
 
 ####################################################################################################
 

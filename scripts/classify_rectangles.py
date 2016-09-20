@@ -12,7 +12,7 @@ parser = argparse.ArgumentParser(description =
 parser.add_argument("-n", help = "File with necro coordinates", required = True)
 parser.add_argument("-r", help = "File with generated rectangles", required = True)
 parser.add_argument("-i", help = "Page number", type = int, required = True)
-parser.add_argument("-e", help = "Tolerance error", type = int, default = 50)
+parser.add_argument("-e", help = "Tolerance error", type = int, default = 400)
 args = parser.parse_args()
 
 rectangles = OrderedDict()
@@ -74,9 +74,10 @@ def classify():
         rect_error = {}
         for rec in rectangles:
             rect_error[rec] = check_error(necro, rec)
-            nearest = min(rect_error, key=rect_error.get)
-            # print >> sys.stderr, rect_error[nearest]
-            # print >> sys.stderr, float(rect_error[nearest]) / 4
+        nearest = min(rect_error, key=rect_error.get)
+        print >> sys.stderr, rect_error[nearest]
+        print >> sys.stderr, float(rect_error[nearest]) / 4
+        print >> sys.stderr, str(x1) + " " + str(y1) + " " + str(x2) + " " + str(y2)
         if float(rect_error[nearest]) / 4 < float(args.e):
             # print >> sys.stderr, "FOUND IT"
             rectangles[nearest] = 1

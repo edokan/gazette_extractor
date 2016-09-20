@@ -10,6 +10,7 @@ echo "Generating rectangles for" ${DDJVU_FILE}
 
 for i in $(seq 1 $PAGES)
 do
+    echo PAGE ${i}
     #Clean xml of wrong chars
     python scripts/xml_cleaner.py $DIR/page_$i.xml > $DIR/page_$i.xml_cleaned
 
@@ -19,7 +20,7 @@ do
         > $DIR/page_$i.xml_coord
 
     #Extract potential necro rectangles
-    python scripts/rectangle.py -f $DIR/page_$i.tiff -v \
+    python scripts/rectangle.py -f $DIR/page_$i.tiff \
         -l 200 -u 2500 \
        < $DIR/page_$i.xml_coord \
        > $DIR/page_$i.rect
