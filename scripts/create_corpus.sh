@@ -2,6 +2,8 @@
 
 INPUT_DJVU=$@
 
+echo $INPUT_DJVU
+
 for gazette_djvu in $INPUT_DJVU; do
     gazette_title=`basename $gazette_djvu .djvu`
     echo $gazette_djvu

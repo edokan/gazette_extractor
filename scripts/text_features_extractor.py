@@ -36,8 +36,8 @@ def cut_xml(_x1, _y1, _x2, _y2):
             y1 = coordinates[1]                  
             x2 = coordinates[2]                                                                                                                     
             y2 = coordinates[3]
-        if (int(x1) > _x1 and int(x2) < _x2 and int(y1) > _y1 and int(y2) < _y2 and word.text is not None): 
-            words_list.append(word.text.rstrip().lstrip())
+            if (int(x1) > _x1 and int(x2) < _x2 and int(y1) > _y1 and int(y2) < _y2 and word.text is not None): 
+                words_list.append(word.text.rstrip().lstrip())
     return words_list
 
 def get_chars_amount(words_list):
