@@ -8,6 +8,7 @@ parser = argparse.ArgumentParser(description =
         Extract metadata features from DJVU metadata.
         """
         )
+parser.add_argument("-y", help = "Default year of newspaper if none is specified", default = "1930", required = False, type = str)
 args = parser.parse_args()
 
 
@@ -22,10 +23,14 @@ def get_gazette_title():
         features["INTITLE+" + token] = ""
 
 def get_gazette_year():
-    if metadata["durationStart"] is not None:
-        features["YEAR"] = metadata["durationStart"][:4]
+    durationStart = metadata.get("durationStart", 0)
+    durationEnd = metadata.get("durationEnd", 0)
+    if durationStart != 0:
+        features["YEAR"] = durationStart[:4]
+    elif durationEnd != 0:
+        features["YEAR"] = durationEnd[:4]
     else:
-        features["YEAR"] = metadata["durationEnd"][:4]
+        features["YEAR"] = args.y
 
 
 if __name__ == "__main__":

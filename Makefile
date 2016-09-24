@@ -17,7 +17,7 @@ SHELL = /bin/bash
 ### CONFIGURE ME ###
 
 INPUT_DIR = ~/Nekrologi
-KENLM_BIN = ~/kenlm/bin
+KENLM_BIN = ~/kenlm/build/bin
 VOWPAL_WABBIT_DIR = ~/vowpal_wabbit/vowpalwabbit
 
 ######################################### TARGETS ##################################################

@@ -74,14 +74,17 @@ def classify():
         rect_error = {}
         for rec in rectangles:
             rect_error[rec] = check_error(necro, rec)
-        nearest = min(rect_error, key=rect_error.get)
-        print >> sys.stderr, rect_error[nearest]
-        print >> sys.stderr, float(rect_error[nearest]) / 4
-        print >> sys.stderr, str(x1) + " " + str(y1) + " " + str(x2) + " " + str(y2)
-        if float(rect_error[nearest]) / 4 < float(args.e):
-            # print >> sys.stderr, "FOUND IT"
-            rectangles[nearest] = 1
-            found = True
+        try:
+            nearest = min(rect_error, key=rect_error.get)
+            print >> sys.stderr, rect_error[nearest]
+            print >> sys.stderr, float(rect_error[nearest]) / 4
+            print >> sys.stderr, str(x1) + " " + str(y1) + " " + str(x2) + " " + str(y2)
+            if float(rect_error[nearest]) / 4 < float(args.e):
+                # print >> sys.stderr, "FOUND IT"
+                rectangles[nearest] = 1
+                found = True
+        except ValueError:
+            pass
         if not found:
             rectangles[necro[1:]] = 1
             modified = True
