@@ -5,9 +5,9 @@ clean_output = ""
 fname = sys.argv[1]
 
 if BYTE_OFFSETS:
-    text = open(fname, "rb").read()
+    text = codecs.open(fname, "rb").read()
 else:
-    text = codecs.open(fname, "rb", "utf8").read()
+    text = codecs.open(fname, "rb", "utf8", errors="ignore").read()
 
 wrong_chars = []
 rx = re.compile("&#([0-9]+);|&#x([0-9a-fA-F]+);")
@@ -28,7 +28,7 @@ while pos < endpos:
         wrong_chars.append(m.group())
     pos = mend
 
-with open(fname) as bad_file:
+with codecs.open(fname) as bad_file:
     for line in bad_file.readlines():
 	line = line.replace("&#10;", "")
         for wrong_char in wrong_chars:
@@ -36,4 +36,4 @@ with open(fname) as bad_file:
                 line = line.replace(wrong_char, "")
         clean_output += line
 
-print clean_output
+print unicode(clean_output, errors="ignore")

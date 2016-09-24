@@ -16,11 +16,16 @@ from collections import OrderedDict
 
 parser = argparse.ArgumentParser(description="Extractor of text features included in .xml file od djvu format")
 parser.add_argument('-pc', help="filename where coordinates are kept.")
+parser.add_argument('-lm', help="include language model : yes/no", default="yes")
 args = parser.parse_args()
 
-tree_xml = ""
-for line in sys.stdin: tree_xml += line
-root = ET.fromstring(tree_xml)
+try:
+    tree_xml = ""
+    for line in sys.stdin:
+        tree_xml += line
+    root = ET.fromstring(tree_xml)
+except:
+    exit(0)
 
 def cut_xml(_x1, _y1, _x2, _y2):
     """Returns words which are in rectangle (based on given xml)
@@ -181,7 +186,8 @@ if __name__ == "__main__":
         text_feature["LETTERS_AMOUNT:"] = get_letters_amount(text_feature["CHARS_AMOUNT:"], text_feature["PUNCT_AMOUNT:"])
         text_feature["VOWELS_AMOUNT:"], text_feature["CONSONANTS_AMOUNT:"] = get_vowels_consonants_amount(words_list)
         text_feature["DIGITS_AMOUNT:"] = get_numbers_amount(words_list)
-        text_feature["LM_SCORE:"] = get_lm_score(words_list)
+        if (args.lm) == "yes":
+            text_feature["LM_SCORE:"] = get_lm_score(words_list)
 ######## STRING FEATURES
         text_feature[get_trigrams(words_list)] = ""
         text_feature[get_bigrams(words_list)] = ""
