@@ -16,7 +16,7 @@ from collections import OrderedDict
 
 parser = argparse.ArgumentParser(description="Extractor of text features included in .xml file od djvu format")
 parser.add_argument('-pc', help="filename where coordinates are kept.")
-parser.add_argument('-lm', help="include language model : yes/no", default="yes")
+parser.add_argument('-lm', help="include language model : True/False", default=False)
 args = parser.parse_args()
 
 try:
@@ -114,7 +114,7 @@ def get_lm_score(words_list):
        words_list : list of words generated from cut_xml() function
     """
     necrologue_lm = kenlm.LanguageModel("LM/necrologies_lm.klm")
-    return necrologue_lm.score(" ".join(words_list))
+    return necrologue_lm.score(" ".join(words_list).replace(""," ")[1: -1])
 
 def remove_special_characters(words_list):
     """ Returns list with replaced vw special characters                                                                                                                                        
@@ -186,7 +186,7 @@ if __name__ == "__main__":
         text_feature["LETTERS_AMOUNT:"] = get_letters_amount(text_feature["CHARS_AMOUNT:"], text_feature["PUNCT_AMOUNT:"])
         text_feature["VOWELS_AMOUNT:"], text_feature["CONSONANTS_AMOUNT:"] = get_vowels_consonants_amount(words_list)
         text_feature["DIGITS_AMOUNT:"] = get_numbers_amount(words_list)
-        if (args.lm) == "yes":
+        if (bool(args.lm)) == True:
             text_feature["LM_SCORE:"] = get_lm_score(words_list)
 ######## STRING FEATURES
         text_feature[get_trigrams(words_list)] = ""

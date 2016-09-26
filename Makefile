@@ -17,7 +17,7 @@ SHELL = /bin/bash
 ### CONFIGURE ME ###
 
 INPUT_DIR = ~/Nekrologi
-KENLM_BIN = ~/kenlm/build/bin
+KENLM_BIN = ~/kenlm/bin
 VOWPAL_WABBIT_DIR = ~/vowpal_wabbit/vowpalwabbit
 
 ######################################### TARGETS ##################################################
@@ -143,7 +143,7 @@ LM/LM.CORPORA.DONE: $(TRAIN_GENERATE_TARGETS)
 ### CREATE .ARPA ###                                                                                                                                
  
 LM/LM.ARPA.DONE: LM/LM.CORPORA.DONE
-	cat LM/corpus_necrologies.txt | $(KENLM_BIN)/lmplz -S 1G --discount_fallback -o 3 > LM/necrologies_lm.arpa
+	cat LM/corpus_necrologies.txt | sed 's/./& /g' | $(KENLM_BIN)/lmplz -S 1G --discount_fallback -o 3 > LM/necrologies_lm.arpa
 	touch $@
 
 ### CREATE BINARY ###                                                                                                                              
