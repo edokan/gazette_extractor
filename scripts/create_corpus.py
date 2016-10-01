@@ -35,5 +35,11 @@ if __name__ == "__main__":
     for coord, page in necrologue.items():
         coordinates = coord.split(",")
         page_dir = str(gazette_title) + "/page_" + str(page) + ".xml_cleaned"
+        page_with_necro = str(gazette_title) + "/page_" + str(page) + ".txt"
         sys.stdout.write(cut_xml(coordinates[0], coordinates[1], coordinates[2], coordinates[3], \
                                  page_dir))
+        #Creates corpus of pages with necrologies
+        with open(page_with_necro) as page_data:
+            for line in page_data:
+                with open("LM/corpus_pages.txt", "ab") as corpus_pages:
+                    corpus_pages.write(bytes(line.lower(), 'UTF-8'))

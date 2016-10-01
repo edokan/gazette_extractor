@@ -16,6 +16,7 @@ from collections import OrderedDict
 
 parser = argparse.ArgumentParser(description="Extractor of text features included in .xml file od djvu format")
 parser.add_argument('-pc', help="filename where coordinates are kept.")
+parser.add_argument('-pt', help="filename where text layer is kept.")
 parser.add_argument('-lm', help="include language model : True/False", default=False)
 args = parser.parse_args()
 
@@ -116,6 +117,15 @@ def get_lm_score(words_list):
     necrologue_lm = kenlm.LanguageModel("LM/necrologies_lm.klm")
     return necrologue_lm.score(" ".join(words_list).replace(""," ")[1: -1])
 
+def get_lm_page_score(page_text):
+    """Returns logarythmic scaled probability of sentence from LM                                                                                    
+       Parameters:                                                                                                                                   
+       ----------                                                                                                                                    
+       words_list : list of words generated from cut_xml() function                                                                                 
+    """
+    necrologue_lm = kenlm.LanguageModel("LM/pages_lm.klm")
+    return necrologue_lm.score(" ".join(words_list).replace(""," ")[1: -1])
+
 def remove_special_characters(words_list):
     """ Returns list with replaced vw special characters                                                                                                                                        
         Parameters:                                                                                                                                                                              
@@ -172,10 +182,15 @@ def get_bigrams(words_list):
               
 if __name__ == "__main__":
     coords_input = []
+
     with open(args.pc) as coords:
         for coord in coords.readlines(): 
             coords_input.append(coord.replace(":","").replace("X1","").replace("X2","").replace("X3","").replace("X4","")\
                                 .replace("Y1","").replace("Y2","").replace("Y3","").replace("Y4","").rstrip().split(" "))
+
+    with open(args.pt) as page_text:
+        page = page_text.read()
+
     for coord_input in coords_input :
         text_feature = OrderedDict()
         words_list = cut_xml(int(coord_input[0]),int(coord_input[1]),int(coord_input[2]),int(coord_input[3]))
@@ -188,6 +203,7 @@ if __name__ == "__main__":
         text_feature["DIGITS_AMOUNT:"] = get_numbers_amount(words_list)
         if (bool(args.lm)) == True:
             text_feature["LM_SCORE:"] = get_lm_score(words_list)
+        text_feature["LM_PAGE_SCORE:"] = get_lm_page_score(page)
 ######## STRING FEATURES
         text_feature[get_trigrams(words_list)] = ""
         text_feature[get_bigrams(words_list)] = ""

@@ -20,5 +20,9 @@ do
 
     #Extracting page xml.
     djvutoxml --with-anno --with-text --page $i ${DDJVU_FILE} ${DIR}/page_$i.xml
+
+    #Extracting page text.
+    djvutxt --page=$i ${DDJVU_FILE} ${DIR}/page_$i.txt
+
 done
 

@@ -76,13 +76,15 @@ train-purge:
 		   train/train.* \
 		   LM/*.txt \
 		   LM/necrologies_lm.* \
+		   LM/pages_lm.* \
 		   LM/*.DONE
 
 train-clean:
 	rm -rf train/train.*
 	rm -rf LM/*.txt \
 		LM/necrologies_lm.* \
-		LM/*.DONE
+		LM/*.DONE \
+		LM/pages_lm.*
 
 test-purge:
 	rm -rf test-A/*/ \
@@ -144,12 +146,14 @@ LM/LM.CORPORA.DONE: $(TRAIN_GENERATE_TARGETS)
  
 LM/LM.ARPA.DONE: LM/LM.CORPORA.DONE
 	cat LM/corpus_necrologies.txt | sed 's/./& /g' | $(KENLM_BIN)/lmplz -S 1G --discount_fallback -o 3 > LM/necrologies_lm.arpa
+	cat LM/corpus_pages.txt | sed 's/./& /g' | $(KENLM_BIN)/lmplz -S 1G --discount_fallback -o 3 > LM/pages_lm.arpa
 	touch $@
 
 ### CREATE BINARY ###                                                                                                                              
  
 LM/LM.BINARY.DONE: LM/LM.ARPA.DONE
 	$(KENLM_BIN)/build_binary -s LM/necrologies_lm.arpa LM/necrologies_lm.klm
+	$(KENLM_BIN)/build_binary -s LM/pages_lm.arpa LM/pages_lm.klm
 	touch $@
 
 
