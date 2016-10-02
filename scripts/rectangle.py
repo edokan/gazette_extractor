@@ -81,7 +81,7 @@ def find_rectangles(original, thickened):
     contours, hierarchy = cv2.findContours(thickened.copy(),cv2.RETR_TREE, cv2.CHAIN_APPROX_TC89_KCOS)
 
     rect_image = original.copy()
-    unimportant_rect = set()
+    # unimportant_rect = set()
 
     for i, cnt in enumerate(contours):
         # if hierarchy[0, i, 3] == -1:
@@ -92,8 +92,8 @@ def find_rectangles(original, thickened):
         if (height > args.l and width > args.l) and (height < args.u and width < args.u):
             # if hierarchy[0, i, 3] == -1 or (i in unimportant_rect):
             rectangles.append((x, y, x + w, y + h))
-        else:
-            unimportant_rect.add(i)
+        # else:
+            # unimportant_rect.add(i)
 
     if args.v:
         rect_output = args.f.replace(".tiff", ".rect.tiff")

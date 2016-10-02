@@ -18,7 +18,7 @@ do
        > $DIR/page_$i.graphic_features.vw
 
    #Extract text features
-   python3 scripts/text_features_extractor.py -pc $DIR/page_$i.rect \
+   python3 scripts/text_features_extractor.py -pc $DIR/page_$i.rect -lm no \
        < $DIR/page_$i.xml_cleaned \
        > $DIR/page_$i.text_features.vw
 
