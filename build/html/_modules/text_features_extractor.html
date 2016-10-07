@@ -1,0 +1,291 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>text_features_extractor &mdash; Gazette Reaper 1.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="Gazette Reaper 1.0.1 documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for text_features_extractor</h1><div class="highlight"><pre>
+<span class="ch">#!/usr/bin/python3</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="sd">&quot;&quot;&quot;Prints text features of the given rectangle,                                                                                                                                                  </span>
+<span class="sd">   each xml given as stdin should be cleaned by wrong_chars_xml_cleaner                                                                                                                         </span>
+<span class="sd">   as the positional argument must be given .rect file                                                                                                                                           </span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">xml.etree.ElementTree</span> <span class="kn">as</span> <span class="nn">ET</span>
+<span class="kn">import</span> <span class="nn">string</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">kenlm</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;Extractor of text features included in .xml file od djvu format&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-pc&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;filename where coordinates are kept.&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-lm&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;include language model : yes/no&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;yes&quot;</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">tree_xml</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="p">:</span>
+            <span class="n">tree_xml</span> <span class="o">+=</span> <span class="n">line</span>
+        <span class="n">root</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">tree_xml</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="nb">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+<div class="viewcode-block" id="cut_xml"><a class="viewcode-back" href="../text_features_extractor.html#text_features_extractor.cut_xml">[docs]</a><span class="k">def</span> <span class="nf">cut_xml</span><span class="p">(</span><span class="n">_x1</span><span class="p">,</span> <span class="n">_y1</span><span class="p">,</span> <span class="n">_x2</span><span class="p">,</span> <span class="n">_y2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns words which are in rectangle (based on given xml)</span>
+<span class="sd">       Parameters:</span>
+<span class="sd">       ----------</span>
+<span class="sd">       _x1, _y1, _x2, _y2 : coordinates of rectangle</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">words_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="s1">&#39;WORD&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">word</span><span class="o">.</span><span class="n">text</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span> 
+            <span class="n">coordinates</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">word</span><span class="o">.</span><span class="n">attrib</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>                                                                  
+            <span class="n">x1</span> <span class="o">=</span> <span class="n">coordinates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>                                                                                                                     
+            <span class="n">y1</span> <span class="o">=</span> <span class="n">coordinates</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>                  
+            <span class="n">x2</span> <span class="o">=</span> <span class="n">coordinates</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>                                                                                                                     
+            <span class="n">y2</span> <span class="o">=</span> <span class="n">coordinates</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">x1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">_x1</span> <span class="ow">and</span> <span class="nb">int</span><span class="p">(</span><span class="n">x2</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">_x2</span> <span class="ow">and</span> <span class="nb">int</span><span class="p">(</span><span class="n">y1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">_y1</span> <span class="ow">and</span> <span class="nb">int</span><span class="p">(</span><span class="n">y2</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">_y2</span> <span class="ow">and</span> <span class="n">word</span><span class="o">.</span><span class="n">text</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">):</span> 
+                <span class="n">words_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">word</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span><span class="o">.</span><span class="n">lstrip</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">words_list</span></div>
+
+<div class="viewcode-block" id="get_chars_amount"><a class="viewcode-back" href="../text_features_extractor.html#text_features_extractor.get_chars_amount">[docs]</a><span class="k">def</span> <span class="nf">get_chars_amount</span><span class="p">(</span><span class="n">words_list</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns number of chars in rectangle</span>
+<span class="sd">       Parameters:</span>
+<span class="sd">       ----------</span>
+<span class="sd">       words_list : list of words generated from cut_xml() function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">sum</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">word</span><span class="p">)</span> <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">words_list</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="get_punct_amount"><a class="viewcode-back" href="../text_features_extractor.html#text_features_extractor.get_punct_amount">[docs]</a><span class="k">def</span> <span class="nf">get_punct_amount</span><span class="p">(</span><span class="n">words_list</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns number of punctation in rectangle</span>
+<span class="sd">       Parameters:</span>
+<span class="sd">       ----------</span>
+<span class="sd">       words_list : list of words generated from cut_xml() function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">l1</span><span class="p">,</span> <span class="n">l2</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">l2</span><span class="p">,</span> <span class="n">l1</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="nb">sum</span><span class="p">([</span><span class="n">count</span><span class="p">(</span><span class="n">word</span><span class="p">,</span> <span class="n">string</span><span class="o">.</span><span class="n">punctuation</span><span class="p">)</span> <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">words_list</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="get_words_amount"><a class="viewcode-back" href="../text_features_extractor.html#text_features_extractor.get_words_amount">[docs]</a><span class="k">def</span> <span class="nf">get_words_amount</span><span class="p">(</span><span class="n">words_list</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns number of words in rectangle</span>
+<span class="sd">       Parameters:</span>
+<span class="sd">       ----------</span>
+<span class="sd">       words_list : list of words generated from cut_xml() function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">words_list</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="get_letters_amount"><a class="viewcode-back" href="../text_features_extractor.html#text_features_extractor.get_letters_amount">[docs]</a><span class="k">def</span> <span class="nf">get_letters_amount</span><span class="p">(</span><span class="n">chars_counter</span><span class="p">,</span> <span class="n">punct_counter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns diff between chars amount and punctation amount,</span>
+<span class="sd">       counts how many letters we have.</span>
+<span class="sd">       Parameters:</span>
+<span class="sd">       ----------</span>
+<span class="sd">       chars_counter : tells about number of chars</span>
+<span class="sd">       punct_counter : tells about number of punctation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">chars_counter</span> <span class="o">-</span> <span class="n">punct_counter</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span> <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">else</span> <span class="p">:</span> <span class="k">return</span> <span class="n">chars_counter</span> <span class="o">-</span> <span class="n">punct_counter</span></div>
+
+<div class="viewcode-block" id="get_vowels_consonants_amount"><a class="viewcode-back" href="../text_features_extractor.html#text_features_extractor.get_vowels_consonants_amount">[docs]</a><span class="k">def</span> <span class="nf">get_vowels_consonants_amount</span><span class="p">(</span><span class="n">words_list</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns vowels and consonants number in rectangle</span>
+<span class="sd">       Parameters:</span>
+<span class="sd">       ----------</span>
+<span class="sd">       words_list : list of words generated from cut_xml() function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">vowel_counter</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">consonants_counter</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">words_list</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">letter</span> <span class="ow">in</span> <span class="n">word</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">letter</span> <span class="ow">in</span> <span class="s2">&quot;aeiouyąęó&quot;</span> <span class="p">:</span> <span class="n">vowel_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">elif</span> <span class="p">(</span><span class="n">letter</span> <span class="ow">not</span> <span class="ow">in</span> <span class="s2">&quot;aeiouyąęó&quot;</span> <span class="ow">and</span> <span class="n">letter</span><span class="o">.</span><span class="n">isalpha</span><span class="p">()):</span> <span class="n">consonants_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">vowel_counter</span><span class="p">,</span> <span class="n">consonants_counter</span></div>
+
+<div class="viewcode-block" id="get_numbers_amount"><a class="viewcode-back" href="../text_features_extractor.html#text_features_extractor.get_numbers_amount">[docs]</a><span class="k">def</span> <span class="nf">get_numbers_amount</span><span class="p">(</span><span class="n">words_list</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns amount of numbers in rectangle</span>
+<span class="sd">       Parameters:</span>
+<span class="sd">       ----------</span>
+<span class="sd">       words_list : list of words generated from cut_xml() function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">digit_counter</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">words_list</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">letter</span> <span class="ow">in</span> <span class="n">word</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">letter</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span> <span class="n">digit_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">digit_counter</span></div>
+
+<div class="viewcode-block" id="get_lm_score"><a class="viewcode-back" href="../text_features_extractor.html#text_features_extractor.get_lm_score">[docs]</a><span class="k">def</span> <span class="nf">get_lm_score</span><span class="p">(</span><span class="n">words_list</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns logarythmic scaled probability of sentence from LM</span>
+<span class="sd">       Parameters:</span>
+<span class="sd">       ----------</span>
+<span class="sd">       words_list : list of words generated from cut_xml() function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">necrologue_lm</span> <span class="o">=</span> <span class="n">kenlm</span><span class="o">.</span><span class="n">LanguageModel</span><span class="p">(</span><span class="s2">&quot;LM/necrologies_lm.klm&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">necrologue_lm</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">words_list</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="remove_special_characters"><a class="viewcode-back" href="../text_features_extractor.html#text_features_extractor.remove_special_characters">[docs]</a><span class="k">def</span> <span class="nf">remove_special_characters</span><span class="p">(</span><span class="n">words_list</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Returns list with replaced vw special characters                                                                                                                                        </span>
+<span class="sd">        Parameters:                                                                                                                                                                              </span>
+<span class="sd">        ----------                                                                                                                                                                               </span>
+<span class="sd">        words_list : list of words generated from cut_xml() function                                                                                                                             </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sentence_h</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">words_list</span><span class="p">))</span>
+    <span class="n">sentence</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">sentence_h</span><span class="p">:</span>
+        <span class="n">char</span> <span class="o">=</span> <span class="n">char</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span><span class="s2">&quot;COLON&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;|&quot;</span><span class="p">,</span> <span class="s2">&quot;PIPE&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;SPACE&quot;</span><span class="p">)</span>
+        <span class="n">sentence</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">char</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sentence</span></div>
+    
+<div class="viewcode-block" id="get_trigrams"><a class="viewcode-back" href="../text_features_extractor.html#text_features_extractor.get_trigrams">[docs]</a><span class="k">def</span> <span class="nf">get_trigrams</span><span class="p">(</span><span class="n">words_list</span><span class="p">):</span>
+   <span class="sd">&quot;&quot;&quot;Returns chars trigrams</span>
+<span class="sd">      Parameters:</span>
+<span class="sd">      ----------</span>
+<span class="sd">      words_list : list of words generated from cut_xml() function</span>
+<span class="sd">   &quot;&quot;&quot;</span>
+   <span class="n">sentence</span> <span class="o">=</span> <span class="n">remove_special_characters</span><span class="p">(</span><span class="n">words_list</span><span class="p">)</span>
+   <span class="n">trigrams</span> <span class="o">=</span> <span class="p">[]</span>
+   <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sentence</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">:</span>
+       <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+       <span class="k">while</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">sentence</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="p">:</span>
+           <span class="n">trigrams</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;TRIGRAM+&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">sentence</span><span class="p">[</span><span class="n">index</span><span class="p">])</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">sentence</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">sentence</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]))</span>
+           <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
+            
+   <span class="k">return</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">trigrams</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="get_unigrams"><a class="viewcode-back" href="../text_features_extractor.html#text_features_extractor.get_unigrams">[docs]</a><span class="k">def</span> <span class="nf">get_unigrams</span><span class="p">(</span><span class="n">words_list</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns chars unigrams</span>
+<span class="sd">       Parameters:</span>
+<span class="sd">       ----------</span>
+<span class="sd">       words_list : list of words generated from cut_xml() function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sentence</span> <span class="o">=</span> <span class="n">remove_special_characters</span><span class="p">(</span><span class="n">words_list</span><span class="p">)</span>
+    <span class="n">unigrams</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;CHAR+&quot;</span> <span class="o">+</span> <span class="n">letter</span> <span class="k">for</span> <span class="n">letter</span> <span class="ow">in</span> <span class="n">sentence</span><span class="p">]</span>
+    <span class="k">return</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">unigrams</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="get_bigrams"><a class="viewcode-back" href="../text_features_extractor.html#text_features_extractor.get_bigrams">[docs]</a><span class="k">def</span> <span class="nf">get_bigrams</span><span class="p">(</span><span class="n">words_list</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns chars bigrams</span>
+<span class="sd">       Parameters:</span>
+<span class="sd">       ----------</span>
+<span class="sd">       words_list : list of words generated from cut_xml() function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sentence</span> <span class="o">=</span> <span class="n">remove_special_characters</span><span class="p">(</span><span class="n">words_list</span><span class="p">)</span>
+    <span class="n">bigrams</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sentence</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">sentence</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">bigrams</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;BIGRAM+&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">sentence</span><span class="p">[</span><span class="n">index</span><span class="p">])</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">sentence</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]))</span>
+            <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bigrams</span><span class="p">)</span></div>
+              
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">coords_input</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">pc</span><span class="p">)</span> <span class="k">as</span> <span class="n">coords</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">coord</span> <span class="ow">in</span> <span class="n">coords</span><span class="o">.</span><span class="n">readlines</span><span class="p">():</span> 
+            <span class="n">coords_input</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">coord</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;X1&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;X2&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;X3&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;X4&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">)</span>\
+                                <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;Y1&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;Y2&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;Y3&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;Y4&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">coord_input</span> <span class="ow">in</span> <span class="n">coords_input</span> <span class="p">:</span>
+        <span class="n">text_feature</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="n">words_list</span> <span class="o">=</span> <span class="n">cut_xml</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">coord_input</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span><span class="nb">int</span><span class="p">(</span><span class="n">coord_input</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span><span class="nb">int</span><span class="p">(</span><span class="n">coord_input</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span><span class="nb">int</span><span class="p">(</span><span class="n">coord_input</span><span class="p">[</span><span class="mi">3</span><span class="p">]))</span>
+<span class="c1">######## NUMBER FEATURES</span>
+        <span class="n">text_feature</span><span class="p">[</span><span class="s2">&quot;CHARS_AMOUNT:&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_chars_amount</span><span class="p">(</span><span class="n">words_list</span><span class="p">)</span>
+        <span class="n">text_feature</span><span class="p">[</span><span class="s2">&quot;WORDS_AMOUNT:&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_words_amount</span><span class="p">(</span><span class="n">words_list</span><span class="p">)</span>
+        <span class="n">text_feature</span><span class="p">[</span><span class="s2">&quot;PUNCT_AMOUNT:&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_punct_amount</span><span class="p">(</span><span class="n">words_list</span><span class="p">)</span>
+        <span class="n">text_feature</span><span class="p">[</span><span class="s2">&quot;LETTERS_AMOUNT:&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_letters_amount</span><span class="p">(</span><span class="n">text_feature</span><span class="p">[</span><span class="s2">&quot;CHARS_AMOUNT:&quot;</span><span class="p">],</span> <span class="n">text_feature</span><span class="p">[</span><span class="s2">&quot;PUNCT_AMOUNT:&quot;</span><span class="p">])</span>
+        <span class="n">text_feature</span><span class="p">[</span><span class="s2">&quot;VOWELS_AMOUNT:&quot;</span><span class="p">],</span> <span class="n">text_feature</span><span class="p">[</span><span class="s2">&quot;CONSONANTS_AMOUNT:&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_vowels_consonants_amount</span><span class="p">(</span><span class="n">words_list</span><span class="p">)</span>
+        <span class="n">text_feature</span><span class="p">[</span><span class="s2">&quot;DIGITS_AMOUNT:&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_numbers_amount</span><span class="p">(</span><span class="n">words_list</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">lm</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;yes&quot;</span><span class="p">:</span>
+            <span class="n">text_feature</span><span class="p">[</span><span class="s2">&quot;LM_SCORE:&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_lm_score</span><span class="p">(</span><span class="n">words_list</span><span class="p">)</span>
+<span class="c1">######## STRING FEATURES</span>
+        <span class="n">text_feature</span><span class="p">[</span><span class="n">get_trigrams</span><span class="p">(</span><span class="n">words_list</span><span class="p">)]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">text_feature</span><span class="p">[</span><span class="n">get_bigrams</span><span class="p">(</span><span class="n">words_list</span><span class="p">)]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">text_feature</span><span class="p">[</span><span class="n">get_unigrams</span><span class="p">(</span><span class="n">words_list</span><span class="p">)]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+        <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="n">text_feature</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">text_feature</span><span class="p">[</span><span class="n">feature</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">feature</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">feature</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">text_feature</span><span class="p">[</span><span class="n">feature</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Maximiliana Behnke & Sandra Ambroziak.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

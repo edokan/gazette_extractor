@@ -1,0 +1,286 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>graphic_features_extractor &mdash; Gazette Reaper 1.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="Gazette Reaper 1.0.1 documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for graphic_features_extractor</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">cv2</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span> <span class="nn">detect_peaks</span> <span class="kn">import</span> <span class="n">detect_peaks</span>
+
+
+<div class="viewcode-block" id="GraphicFeaturesExtractor"><a class="viewcode-back" href="../graphic_features_extractor.html#graphic_features_extractor.GraphicFeaturesExtractor">[docs]</a><span class="k">class</span> <span class="nc">GraphicFeaturesExtractor</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract graphic features from generated rectangles.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p_file</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">verbose</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rectangles</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">features</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">load_rectangles</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">page</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_page</span><span class="p">(</span><span class="n">p_file</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">rectangle</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">rectangles</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">analyze_rectangle</span><span class="p">(</span><span class="n">rectangle</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">print_features</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+<div class="viewcode-block" id="GraphicFeaturesExtractor.histograms"><a class="viewcode-back" href="../graphic_features_extractor.html#graphic_features_extractor.GraphicFeaturesExtractor.histograms">[docs]</a>    <span class="k">def</span> <span class="nf">histograms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">roi</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">verbose</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate horizontal and vertical histograms for a specified region of interest.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            roi (matrix): region of interest cut from page.</span>
+<span class="sd">            n (int): Consider every n pixel while searching for peaks.</span>
+<span class="sd">            verbose (bool): verbose mode.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># CALCULATE HISTOGRAMS ###############################################</span>
+
+        <span class="n">height</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">roi</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">horizontal</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">vertical</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">horizontal_hist</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="n">roi</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">COLOR_GRAY2RGB</span><span class="p">)</span>
+        <span class="n">vertical_hist</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="n">roi</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">COLOR_GRAY2RGB</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">height</span><span class="p">):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">width</span> <span class="o">-</span> <span class="n">cv2</span><span class="o">.</span><span class="n">countNonZero</span><span class="p">(</span><span class="n">roi</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:])</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="n">width</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">width</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="n">vertical</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="n">vertical_hist</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">value</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">before</span> <span class="o">=</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cv2</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="n">vertical_hist</span><span class="p">,</span> <span class="n">before</span><span class="p">,</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">i</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="n">before</span> <span class="o">=</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">width</span><span class="p">):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">height</span> <span class="o">-</span> <span class="n">cv2</span><span class="o">.</span><span class="n">countNonZero</span><span class="p">(</span><span class="n">roi</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="n">height</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">height</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="n">horizontal</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="n">horizontal_hist</span><span class="p">[</span><span class="n">value</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">before</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cv2</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="n">horizontal_hist</span><span class="p">,</span> <span class="n">before</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">value</span><span class="p">),</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="n">before</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+        <span class="c1"># HISTOGRAM PEAKS AND VALLEYS #######################################</span>
+
+        <span class="n">horizontal_less</span> <span class="o">=</span> <span class="n">horizontal</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="n">n</span><span class="p">]</span>
+        <span class="n">vertical_less</span> <span class="o">=</span> <span class="n">vertical</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="n">n</span><span class="p">]</span>
+
+        <span class="c1"># VALLEYS ###########################################################</span>
+
+        <span class="n">horizontal_valleys</span> <span class="o">=</span> <span class="n">detect_peaks</span><span class="p">(</span>
+            <span class="n">horizontal_less</span><span class="p">,</span> <span class="n">mph</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mpd</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">edge</span><span class="o">=</span><span class="s1">&#39;falling&#39;</span><span class="p">,</span> <span class="n">kpsh</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">valley</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">horizontal_valleys</span><span class="p">)):</span>
+            <span class="n">cv2</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="n">horizontal_hist</span><span class="p">,</span> <span class="p">(</span><span class="n">horizontal_valleys</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="n">horizontal</span><span class="p">[</span><span class="n">horizontal_valleys</span><span class="p">[</span>
+                     <span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span><span class="p">]),</span> <span class="p">(</span><span class="n">horizontal_valleys</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="n">horizontal</span><span class="p">[</span><span class="n">horizontal_valleys</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span><span class="p">]),</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">10</span><span class="p">)</span>
+
+        <span class="n">vertical_valleys</span> <span class="o">=</span> <span class="n">detect_peaks</span><span class="p">(</span><span class="n">vertical_less</span><span class="p">,</span> <span class="n">mph</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mpd</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                                        <span class="n">edge</span><span class="o">=</span><span class="s1">&#39;falling&#39;</span><span class="p">,</span> <span class="n">kpsh</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">valley</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">vertical_valleys</span><span class="p">)):</span>
+            <span class="n">cv2</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="n">vertical_hist</span><span class="p">,</span> <span class="p">(</span><span class="n">vertical</span><span class="p">[</span><span class="n">vertical_valleys</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span><span class="p">],</span> <span class="n">vertical_valleys</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span><span class="p">),</span>
+                     <span class="p">(</span><span class="n">vertical</span><span class="p">[</span><span class="n">vertical_valleys</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span><span class="p">],</span> <span class="n">vertical_valleys</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span><span class="p">),</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">10</span><span class="p">)</span>
+
+        <span class="c1"># PEAKS #############################################################</span>
+
+        <span class="n">horizontal_peaks</span> <span class="o">=</span> <span class="n">detect_peaks</span><span class="p">(</span><span class="n">horizontal_less</span><span class="p">,</span> <span class="n">mph</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mpd</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                                        <span class="n">edge</span><span class="o">=</span><span class="s1">&#39;falling&#39;</span><span class="p">,</span> <span class="n">kpsh</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">valley</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">horizontal_peaks</span><span class="p">)):</span>
+            <span class="n">cv2</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="n">horizontal_hist</span><span class="p">,</span> <span class="p">(</span><span class="n">horizontal_peaks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="n">horizontal</span><span class="p">[</span><span class="n">horizontal_peaks</span><span class="p">[</span>
+                     <span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span><span class="p">]),</span> <span class="p">(</span><span class="n">horizontal_peaks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="n">horizontal</span><span class="p">[</span><span class="n">horizontal_peaks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span><span class="p">]),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">10</span><span class="p">)</span>
+
+        <span class="n">vertical_peaks</span> <span class="o">=</span> <span class="n">detect_peaks</span><span class="p">(</span><span class="n">vertical_less</span><span class="p">,</span> <span class="n">mph</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mpd</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                                      <span class="n">edge</span><span class="o">=</span><span class="s1">&#39;falling&#39;</span><span class="p">,</span> <span class="n">kpsh</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">valley</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">vertical_peaks</span><span class="p">)):</span>
+            <span class="n">cv2</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="n">vertical_hist</span><span class="p">,</span> <span class="p">(</span><span class="n">vertical</span><span class="p">[</span><span class="n">vertical_peaks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span><span class="p">],</span> <span class="n">vertical_peaks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span><span class="p">),</span>
+                     <span class="p">(</span><span class="n">vertical</span><span class="p">[</span><span class="n">vertical_peaks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span><span class="p">],</span> <span class="n">vertical_peaks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">10</span><span class="p">)</span>
+
+        <span class="c1"># SHOW HISTOGRAMS IN VERBOSE MODE ##################################</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">[</span><span class="s2">&quot;HORIZONTAL_PEAKS&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">horizontal_peaks</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">[</span><span class="s2">&quot;HORIZONTAL_VALLEYS&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">horizontal_valleys</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">[</span><span class="s2">&quot;VERTICAL_PEAKS&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">vertical_peaks</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">[</span><span class="s2">&quot;VERTICAL_VALLEYS&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">vertical_valleys</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="n">cv2</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="s1">&#39;horizontal&#39;</span><span class="p">,</span> <span class="n">horizontal_hist</span><span class="p">)</span>
+            <span class="n">cv2</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="s1">&#39;vertical&#39;</span><span class="p">,</span> <span class="n">vertical_hist</span><span class="p">)</span>
+            <span class="n">cv2</span><span class="o">.</span><span class="n">waitKey</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="GraphicFeaturesExtractor.calculate_filled"><a class="viewcode-back" href="../graphic_features_extractor.html#graphic_features_extractor.GraphicFeaturesExtractor.calculate_filled">[docs]</a>    <span class="k">def</span> <span class="nf">calculate_filled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">roi</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate black fill percentage for a region of interest.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            roi (matrix): region of interest cut from page.</span>
+<span class="sd">            height (int): height of ROI.</span>
+<span class="sd">            width (int): width of ROI.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">all_pixels</span> <span class="o">=</span> <span class="n">height</span> <span class="o">*</span> <span class="n">width</span>
+        <span class="n">white_pixels</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">countNonZero</span><span class="p">(</span><span class="n">roi</span><span class="p">)</span>
+        <span class="n">black_pixels</span> <span class="o">=</span> <span class="n">all_pixels</span> <span class="o">-</span> <span class="n">white_pixels</span>
+        <span class="n">filled</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">black_pixels</span><span class="p">)</span> <span class="o">/</span> <span class="n">all_pixels</span>
+        <span class="k">return</span> <span class="n">filled</span></div>
+
+<div class="viewcode-block" id="GraphicFeaturesExtractor.analyze_rectangle"><a class="viewcode-back" href="../graphic_features_extractor.html#graphic_features_extractor.GraphicFeaturesExtractor.analyze_rectangle">[docs]</a>    <span class="k">def</span> <span class="nf">analyze_rectangle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rectangle</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">verbose</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Analyze specific rectangle.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            rectangle (tuple): coordinates of rectangle.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">rectangle</span>
+        <span class="n">roi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">page</span><span class="p">[</span><span class="n">y1</span><span class="p">:</span><span class="n">y2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">x1</span><span class="p">:</span><span class="n">x2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">height</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">roi</span><span class="o">.</span><span class="n">shape</span>
+
+        <span class="n">filled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_filled</span><span class="p">(</span><span class="n">roi</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span>
+
+        <span class="c1"># print(height, width, filled)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">[</span><span class="s2">&quot;HEIGHT&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">height</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">[</span><span class="s2">&quot;WIDTH&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">width</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">[</span><span class="s2">&quot;FILLED&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">filled</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">histograms</span><span class="p">(</span><span class="n">roi</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="GraphicFeaturesExtractor.print_features"><a class="viewcode-back" href="../graphic_features_extractor.html#graphic_features_extractor.GraphicFeaturesExtractor.print_features">[docs]</a>    <span class="k">def</span> <span class="nf">print_features</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Print rectangle&#39;s features.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">feature</span> <span class="o">+</span> <span class="s2">&quot;:&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">[</span><span class="n">feature</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="GraphicFeaturesExtractor.load_rectangles"><a class="viewcode-back" href="../graphic_features_extractor.html#graphic_features_extractor.GraphicFeaturesExtractor.load_rectangles">[docs]</a>    <span class="k">def</span> <span class="nf">load_rectangles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load rectangles&#39; coordinates from stdin.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="p">:</span>
+            <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rectangles</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="GraphicFeaturesExtractor.load_page"><a class="viewcode-back" href="../graphic_features_extractor.html#graphic_features_extractor.GraphicFeaturesExtractor.load_page">[docs]</a>    <span class="k">def</span> <span class="nf">load_page</span><span class="p">(</span><span class="n">p_file</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load page and threshold it.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            p_file (str): Path to page image file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">image</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">p_file</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">otsu_value</span><span class="p">,</span> <span class="n">page</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">threshold</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">THRESH_BINARY_INV</span> <span class="o">-</span> <span class="n">cv2</span><span class="o">.</span><span class="n">THRESH_OTSU</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">page</span></div></div>
+
+
+<div class="viewcode-block" id="parse_args"><a class="viewcode-back" href="../graphic_features_extractor.html#graphic_features_extractor.parse_args">[docs]</a><span class="k">def</span> <span class="nf">parse_args</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parse command line arguments.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">            Prints graphic features for list of rectangles&#39; coordinates and page image.</span>
+<span class="s2">            &quot;&quot;&quot;</span>
+                                     <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Page image input&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-v&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Verbose mode&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;-n&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Take every n pixel to count peaks and valleys, default = 2&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span></div>
+
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parse_args</span><span class="p">()</span>
+    <span class="n">extractor</span> <span class="o">=</span> <span class="n">GraphicFeaturesExtractor</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">f</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">v</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Maximiliana Behnke & Sandra Ambroziak.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

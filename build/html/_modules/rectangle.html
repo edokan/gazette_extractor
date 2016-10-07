@@ -1,0 +1,241 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>rectangle &mdash; Gazette Reaper 1.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="Gazette Reaper 1.0.1 documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for rectangle</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">cv2</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+
+<div class="viewcode-block" id="RectangleGenerator"><a class="viewcode-back" href="../rectangle.html#rectangle.RectangleGenerator">[docs]</a><span class="k">class</span> <span class="nc">RectangleGenerator</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This class preprocesses page image, so it can find coordinates</span>
+<span class="sd">    of potential obituaries.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        f_path (string): Path to page image.</span>
+<span class="sd">        l (int): Lower bound of possible rectangle.</span>
+<span class="sd">        u (int): Upper bound of possible rectangle.</span>
+<span class="sd">        verbose (bool): Verbose mode.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f_path</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">verbose</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">paragraphs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">words</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">load_coordinates</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">original</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">f_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thickened</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_image</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">find_rectangles</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RectangleGenerator.load_coordinates"><a class="viewcode-back" href="../rectangle.html#rectangle.RectangleGenerator.load_coordinates">[docs]</a>    <span class="k">def</span> <span class="nf">load_coordinates</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load word coordinates from preprocessed xml file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+            <span class="n">data_type</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">coordinates</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">5</span><span class="p">]])</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">data_type</span> <span class="o">==</span> <span class="s2">&quot;PARAGRAPH&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">paragraphs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">coordinates</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">data_type</span> <span class="o">==</span> <span class="s2">&quot;LINE&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">coordinates</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">data_type</span> <span class="o">==</span> <span class="s2">&quot;WORD&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">words</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">coordinates</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">continue</span></div>
+
+<div class="viewcode-block" id="RectangleGenerator.remove_words"><a class="viewcode-back" href="../rectangle.html#rectangle.RectangleGenerator.remove_words">[docs]</a>    <span class="k">def</span> <span class="nf">remove_words</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Cover words on image with filled rectanges.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            image (matrix): Image to cover its words.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">for</span> <span class="n">coord</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">words</span><span class="p">:</span>
+            <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">coord</span>
+            <span class="n">cv2</span><span class="o">.</span><span class="n">rectangle</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">),</span> <span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">thickness</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RectangleGenerator.preprocess_image"><a class="viewcode-back" href="../rectangle.html#rectangle.RectangleGenerator.preprocess_image">[docs]</a>    <span class="k">def</span> <span class="nf">preprocess_image</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Preprocess page image to find rectangles.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">image</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">original</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">COLOR_BGR2GRAY</span><span class="p">)</span>
+
+        <span class="c1"># Thresholding</span>
+        <span class="n">otsu_value</span><span class="p">,</span> <span class="n">thresholded</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">threshold</span><span class="p">(</span>
+            <span class="n">image</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">THRESH_BINARY_INV</span> <span class="o">+</span> <span class="n">cv2</span><span class="o">.</span><span class="n">THRESH_OTSU</span><span class="p">)</span>
+
+        <span class="c1"># Cover words</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">remove_words</span><span class="p">(</span><span class="n">thresholded</span><span class="p">)</span>
+
+        <span class="c1"># Thicken skeleton</span>
+        <span class="n">thickened</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">dilate</span><span class="p">(</span><span class="n">thresholded</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">getStructuringElement</span><span class="p">(</span>
+            <span class="n">cv2</span><span class="o">.</span><span class="n">MORPH_RECT</span><span class="p">,</span> <span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">)),</span> <span class="n">iterations</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">thickened</span></div>
+
+<div class="viewcode-block" id="RectangleGenerator.find_rectangles"><a class="viewcode-back" href="../rectangle.html#rectangle.RectangleGenerator.find_rectangles">[docs]</a>    <span class="k">def</span> <span class="nf">find_rectangles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">verbose</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Find potential necrology coordinates and print them.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            l (int): Lower bound of potential rectangles.</span>
+<span class="sd">            u (int): Upper bound of potential rectangles.</span>
+<span class="sd">            verbose (bool): Verbose mode.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">rectangles</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">contours</span><span class="p">,</span> <span class="n">hierarchy</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">findContours</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">thickened</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="n">cv2</span><span class="o">.</span><span class="n">RETR_TREE</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">CHAIN_APPROX_TC89_KCOS</span><span class="p">)</span>
+        <span class="c1"># unimportant_rect = set()</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">cnt</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">contours</span><span class="p">):</span>
+            <span class="c1"># if hierarchy[0, i, 3] == -1:</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">boundingRect</span><span class="p">(</span><span class="n">cnt</span><span class="p">)</span>
+            <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">x</span> <span class="o">+</span> <span class="n">w</span><span class="p">,</span> <span class="n">y</span> <span class="o">+</span> <span class="n">h</span>
+            <span class="n">roi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">original</span><span class="p">[</span><span class="n">y1</span><span class="p">:</span><span class="n">y2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">x1</span><span class="p">:</span><span class="n">x2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">channels</span> <span class="o">=</span> <span class="n">roi</span><span class="o">.</span><span class="n">shape</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">height</span> <span class="o">&gt;</span> <span class="n">l</span> <span class="ow">and</span> <span class="n">width</span> <span class="o">&gt;</span> <span class="n">l</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">height</span> <span class="o">&lt;</span> <span class="n">u</span> <span class="ow">and</span> <span class="n">width</span> <span class="o">&lt;</span> <span class="n">u</span><span class="p">):</span>
+                <span class="c1"># if hierarchy[0, i, 3] == -1 or (i in unimportant_rect):</span>
+                <span class="n">rectangles</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">x</span> <span class="o">+</span> <span class="n">w</span><span class="p">,</span> <span class="n">y</span> <span class="o">+</span> <span class="n">h</span><span class="p">))</span>
+            <span class="c1"># else:</span>
+                <span class="c1"># unimportant_rect.add(i)</span>
+
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="n">rect_image</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">original</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">rect_output</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.tiff&quot;</span><span class="p">,</span> <span class="s2">&quot;.rect.tiff&quot;</span><span class="p">)</span>
+            <span class="n">skel_output</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.tiff&quot;</span><span class="p">,</span> <span class="s2">&quot;skel.tiff&quot;</span><span class="p">)</span>
+            <span class="n">rect_dir</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.tiff&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">rect_dir</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">rect_dir</span><span class="p">)</span>
+
+            <span class="n">enum</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="ow">in</span> <span class="n">rectangles</span><span class="p">:</span>
+                <span class="n">height</span> <span class="o">=</span> <span class="n">y2</span> <span class="o">-</span> <span class="n">y1</span>
+                <span class="n">width</span> <span class="o">=</span> <span class="n">x2</span> <span class="o">-</span> <span class="n">x1</span>
+                <span class="n">filename</span> <span class="o">=</span> <span class="n">rect_dir</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">x1</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">y1</span><span class="p">)</span> <span class="o">+</span> \
+                    <span class="s2">&quot;_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">x2</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">y2</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.tiff&quot;</span>
+                <span class="n">cv2</span><span class="o">.</span><span class="n">imwrite</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">original</span><span class="p">[</span><span class="n">y1</span><span class="p">:</span><span class="n">y2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">x1</span><span class="p">:</span><span class="n">x2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+                <span class="n">enum</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">cv2</span><span class="o">.</span><span class="n">rectangle</span><span class="p">(</span><span class="n">rect_image</span><span class="p">,</span> <span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">),</span> <span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">),</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">5</span><span class="p">)</span>
+
+            <span class="n">cv2</span><span class="o">.</span><span class="n">imwrite</span><span class="p">(</span><span class="n">rect_output</span><span class="p">,</span> <span class="n">rect_image</span><span class="p">)</span>
+            <span class="n">cv2</span><span class="o">.</span><span class="n">imwrite</span><span class="p">(</span><span class="n">skel_output</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">thickened</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="ow">in</span> <span class="n">rectangles</span><span class="p">:</span>
+            <span class="n">rectangle</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;X1&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">x1</span><span class="p">),</span> <span class="s2">&quot;Y1&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">y1</span><span class="p">),</span> <span class="s2">&quot;X2&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">x2</span><span class="p">),</span> <span class="s2">&quot;Y2&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">y2</span><span class="p">)}</span>
+            <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;X1&quot;</span><span class="p">,</span> <span class="s2">&quot;Y1&quot;</span><span class="p">,</span> <span class="s2">&quot;X2&quot;</span><span class="p">,</span> <span class="s2">&quot;Y2&quot;</span><span class="p">]:</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">param</span> <span class="o">+</span> <span class="s2">&quot;:&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">rectangle</span><span class="p">[</span><span class="n">param</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="parse_args"><a class="viewcode-back" href="../rectangle.html#rectangle.parse_args">[docs]</a><span class="k">def</span> <span class="nf">parse_args</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parse command line arguments.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">            Generates potential necrology rectangles.</span>
+<span class="s2">            &quot;&quot;&quot;</span>
+                                     <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to page image.&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-l&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Lower bound of possible rectangle&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-u&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Upper bound of possible rectangle&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-v&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Verbose mode&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span></div>
+
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parse_args</span><span class="p">()</span>
+    <span class="n">generator</span> <span class="o">=</span> <span class="n">RectangleGenerator</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">f</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">l</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">u</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">v</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Maximiliana Behnke & Sandra Ambroziak.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

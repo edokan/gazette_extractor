@@ -14,18 +14,20 @@ import argparse
 import kenlm
 from collections import OrderedDict
 
-parser = argparse.ArgumentParser(description="Extractor of text features included in .xml file od djvu format")
-parser.add_argument('-pc', help="filename where coordinates are kept.")
-parser.add_argument('-lm', help="include language model : yes/no", default="yes")
-args = parser.parse_args()
+if __name__ == "__main__":
 
-try:
-    tree_xml = ""
-    for line in sys.stdin:
-        tree_xml += line
-    root = ET.fromstring(tree_xml)
-except:
-    exit(0)
+    parser = argparse.ArgumentParser(description="Extractor of text features included in .xml file od djvu format")
+    parser.add_argument('-pc', help="filename where coordinates are kept.")
+    parser.add_argument('-lm', help="include language model : yes/no", default="yes")
+    args = parser.parse_args()
+
+    try:
+        tree_xml = ""
+        for line in sys.stdin:
+            tree_xml += line
+        root = ET.fromstring(tree_xml)
+    except:
+        exit(0)
 
 def cut_xml(_x1, _y1, _x2, _y2):
     """Returns words which are in rectangle (based on given xml)

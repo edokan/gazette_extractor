@@ -12,12 +12,14 @@ import sys
 import xml.etree.ElementTree as ET
 import string
 
-try:
-    tree_xml = ""
-    for line in sys.stdin: tree_xml += line
-    root = ET.fromstring(tree_xml)
-except:
-    exit(0)
+if __name__ == "__main__":
+
+    try:
+        tree_xml = ""
+        for line in sys.stdin: tree_xml += line
+        root = ET.fromstring(tree_xml)
+    except:
+        exit(0)
 
 para_begin_end = []
 output_words_lines = []
