@@ -1,15 +1,16 @@
 import sys
 import argparse
 
-parser = argparse.ArgumentParser(description = 
-        """
-        Extracts found obituaries using VW input file and VW predictions.
-        Parses it into Gonito format.
-        """
-        )
-parser.add_argument("-i", help = "VW input file", required = True)
-parser.add_argument("-p", help = "VW predictions", required = True)
-args = parser.parse_args()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description = 
+            """
+            Extracts found obituaries using VW input file and VW predictions.
+            Parses it into Gonito format.
+            """
+            )
+    parser.add_argument("-i", help = "VW input file", required = True)
+    parser.add_argument("-p", help = "VW predictions", required = True)
+    args = parser.parse_args()
 
 necrologies = []
 

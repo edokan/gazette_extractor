@@ -20,6 +20,16 @@ INPUT_DIR = ~/Nekrologi
 KENLM_BIN = ~/kenlm/build/bin
 VOWPAL_WABBIT_DIR = ~/vowpal_wabbit/vowpalwabbit
 
+### INSTALL ###
+
+install-doc:
+	sudo apt-get install python-sphinx
+	pip install sphinxcontrib-napoleon --user
+
+install:
+	## TODO Tutaj bedzie instalacja wszystkich paczek i bibliotek.
+	@echo "Finished installing!"
+
 ######################################### TARGETS ##################################################
 
 ### TRAIN ###
