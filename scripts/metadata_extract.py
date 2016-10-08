@@ -43,7 +43,7 @@ if __name__ == "__main__":
         metadata[name] = value
 
     get_gazette_title()
-    get_gazette_year(args.r)
+    get_gazette_year(args.y)
 
     for feature in features:
         if features[feature] == "":

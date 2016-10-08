@@ -11,13 +11,13 @@ class Classifier:
         If Classifier does not find obituary, it adds it to already generated rectangles.
     """
 
-    def __init__(self, r_file, n_file, page):
+    def __init__(self, r_file, n_file, page, error):
         self.rectangles = OrderedDict()
         self.necrologies = []
         self.load_rectangles(r_file)
         self.load_necrologies(n_file)
-        modified = self.classify(page)
-        self.modify_rectangle_file(modified)
+        modified = self.classify(page, error)
+        self.modify_rectangle_file(r_file, modified)
 
         for rect in self.rectangles:
             print(self.rectangles.get(rect, -1))
@@ -103,7 +103,7 @@ class Classifier:
                 modified = True
         return modified
 
-    def modify_rectangle_file(self, modified):
+    def modify_rectangle_file(self, r_file, modified):
         """
         If any necrology is not found in rectangles, rectangle file is modified.
 
@@ -113,7 +113,7 @@ class Classifier:
 
         if modified:
             print >> sys.stderr, "MODIFIED!"
-            with open(self.args.r, 'w') as f:
+            with open(r_file, 'w') as f:
                 for rect in self.rectangles:
                     x1, y1, x2, y2 = rect
                     output = ["X1:" + str(x1), "Y1:" + str(y1),

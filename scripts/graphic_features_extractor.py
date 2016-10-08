@@ -165,7 +165,7 @@ class GraphicFeaturesExtractor():
             x1, y1, x2, y2 = [int(x.split(":")[1]) for x in line.strip().split()]
             self.rectangles.append((x1, y1, x2, y2))
 
-    def load_page(p_file):
+    def load_page(self, p_file):
         """
         Load page and threshold it.
 

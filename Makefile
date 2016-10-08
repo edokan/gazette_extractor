@@ -148,7 +148,7 @@ split-data:
 
 BPE/bpe.model: $(TRAIN_UNPACK_TARGETS)
 	mkdir -p $(@D)
-	find ./train -maxdepth 1 -name *.txt | cat | iconv -f utf-8 -t utf-8 -c \
+	cat ./train/*.txt | iconv -f utf-8 -t utf-8 -c \
 					  | perl -nle 'print lc' \
 					  | ./scripts/subword-nmt/learn_bpe.py -v \
 					  > $@
@@ -163,7 +163,7 @@ LM/LM.CORPORA.DONE: $(TRAIN_GENERATE_TARGETS)
 ### CREATE .ARPA ###
  
 LM/LM.ARPA.DONE: LM/LM.CORPORA.DONE BPE/bpe.model
-	t LM/corpus_necrologies.txt | ./scripts/subword-nmt/apply_bpe.py --codes BPE/bpe.model \
+	cat LM/corpus_necrologies.txt | ./scripts/subword-nmt/apply_bpe.py --codes BPE/bpe.model \
 								  | $(KENLM_BIN)/lmplz -S 1G --discount_fallback -o 3 \
 								  > LM/necrologies_lm.arpa
 	touch $@
