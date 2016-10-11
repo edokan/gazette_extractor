@@ -35,6 +35,9 @@ do
            > $DIR/page_$i.features.vw
 
 done
-
 #Merge all pages features into one file.
-cat `ls -v $DIR/page_*.features.vw` > ${FILE_DIR}/${DDJVU_NAME}.vw
+cat `ls -v $DIR/page_*.features.vw` > ${DIR}/${DDJVU_NAME}.without_lm.vw
+
+#Create lm and add it to the rest of features.
+python3 scripts/lm_feature.py -vw ${DIR}/${DDJVU_NAME}.without_lm.vw --c BPE/bpe.model > ${DIR}/${DDJVU_NAME}.lm_feature.vw
+paste -d" " ${DIR}/${DDJVU_NAME}.without_lm.vw ${DIR}/${DDJVU_NAME}.lm_feature.vw > ${FILE_DIR}/${DDJVU_NAME}.vw
