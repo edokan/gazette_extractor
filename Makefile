@@ -106,6 +106,7 @@ test-clean:
 
 clean-unpack:
 	rm -rf $(TRAIN_UNPACK_TARGETS)
+	rm -f train/*.txt
 
 clean-generate:
 	rm -rf $(TRAIN_GENERATE_TARGETS)

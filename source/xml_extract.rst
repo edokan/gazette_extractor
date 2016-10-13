@@ -1,4 +1,4 @@
-xml_extract.py
+xml_extract module
 ==================
 
 .. automodule:: xml_extract

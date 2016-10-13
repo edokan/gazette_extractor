@@ -10,12 +10,12 @@ import xml.etree.ElementTree as ET
 import string
 from common_text_features_functions import get_punct_amount
 
-try:
-    tree_xml = ""
-    for line in sys.stdin: tree_xml += line
-    root = ET.fromstring(tree_xml)
-except:
-    exit(0)
+#try:
+#    tree_xml = ""
+#    for line in sys.stdin: tree_xml += line
+#    root = ET.fromstring(tree_xml)
+#except:
+#    exit(0)
 
 para_begin_end = []
 output_words_lines = []
@@ -91,7 +91,7 @@ def get_lines_xml(para_xml):
         line_xml = ET.tostring(line)
         get_words_xml(line_xml)
         
-def get_paragraphs_xml():
+def get_paragraphs_xml(root):
     """Get paragraphs from xml
     """
     para_xml = ""
@@ -104,6 +104,14 @@ def get_paragraphs_xml():
             output_words_lines[:] = []
 
 if __name__ == "__main__":
-    get_paragraphs_xml()
+
+    try:
+        tree_xml = ""
+        for line in sys.stdin: tree_xml += line
+        root = ET.fromstring(tree_xml)
+    except:
+        exit(0)
+
+    get_paragraphs_xml(root)
 
 

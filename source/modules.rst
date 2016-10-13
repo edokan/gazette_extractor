@@ -5,10 +5,13 @@ Documentation
    :maxdepth: 4
 
    classify_rectangles
-   create_corpus
+   common_text_features_functions
+   create_corpus_necrologies
+   create_corpus_pages
    detect_peaks
    extract_necro
    graphic_features_extractor
+   lm_feature
    merge_necro
    metadata_extract
    rectangle

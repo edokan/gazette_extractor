@@ -1,4 +1,4 @@
-text_features_extractor.py
+text_features_extractor module
 ==============================
 
 .. automodule:: text_features_extractor

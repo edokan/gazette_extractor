@@ -1,4 +1,4 @@
-xml_cleaner.py
+xml_cleaner module
 ==================
 
 .. automodule:: xml_cleaner

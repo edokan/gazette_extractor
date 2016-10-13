@@ -22,9 +22,12 @@ if __name__ == "__main__":
                 data = necrologue_data.split("/")
                 if len(data) == 2 :
                     page = data[0]
-                    
-                    page_with_necro = str(gazette_title) + "/page_" + str(page) + ".txt"
+                else: 
+                     sys.exit("No necrologies found or corrupted data")
 
-                    with open(page_with_necro) as page_data:
-                        for line in page_data:
-                            sys.stdout.write(line.lower())
+                page_with_necro = str(gazette_title) + "/page_" + str(page) + ".txt"
+
+                with open(page_with_necro) as page_data:
+                    for line in page_data:
+                        sys.stdout.write(line.lower())
+                
