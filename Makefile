@@ -20,6 +20,16 @@ INPUT_DIR = ~/Nekrologi
 KENLM_BIN = ~/kenlm/bin
 VOWPAL_WABBIT_DIR = ~/vowpal_wabbit/vowpalwabbit
 
+### INSTALL ###
+
+install-doc:
+	sudo apt-get install python-sphinx
+	pip install sphinxcontrib-napoleon --user
+
+install:
+	## TODO Tutaj bedzie instalacja wszystkich paczek i bibliotek.
+	@echo "Finished installing!"
+
 ######################################### TARGETS ##################################################
 
 ### TRAIN ###
@@ -76,15 +86,13 @@ train-purge:
 		   train/train.* \
 		   LM/*.txt \
 		   LM/necrologies_lm.* \
-		   LM/pages_lm.* \
 		   LM/*.DONE
 
 train-clean:
 	rm -rf train/train.*
 	rm -rf LM/*.txt \
 		LM/necrologies_lm.* \
-		LM/*.DONE \
-		LM/pages_lm.*
+		LM/*.DONE
 
 test-purge:
 	rm -rf test-A/*/ \
@@ -136,20 +144,32 @@ split-data:
 	./scripts/classify.sh $*.djvu
 	touch $@
 
-### CREATE CORPUS ###                                                                                                                               
- 
+## TRAIN BPE ###
+
+BPE/bpe.model: $(TRAIN_UNPACK_TARGETS)
+	mkdir -p $(@D)
+	cat ./train/*.txt | iconv -f utf-8 -t utf-8 -c \
+					  | perl -nle 'print lc' \
+					  | ./scripts/subword-nmt/learn_bpe.py -v \
+					  > $@
+
+### CREATE LM OBITUARY CORPUS ###
+
+
 LM/LM.CORPORA.DONE: $(TRAIN_GENERATE_TARGETS)
 	./scripts/create_corpus.sh "$(TRAIN_DJVU_LIST)"
 	touch $@
 
-### CREATE .ARPA ###                                                                                                                                
+### CREATE .ARPA ###
  
-LM/LM.ARPA.DONE: LM/LM.CORPORA.DONE
+LM/LM.ARPA.DONE: LM/LM.CORPORA.DONE BPE/bpe.model
 	cat LM/corpus_necrologies.txt | sed 's/./& /g' | $(KENLM_BIN)/lmplz -S 1G --discount_fallback -o 3 > LM/necrologies_lm.arpa
-	cat LM/corpus_pages.txt | sed 's/./& /g' | $(KENLM_BIN)/lmplz -S 1G --discount_fallback -o 3 > LM/pages_lm.arpa
+	cat LM/corpus_pages.txt | ./scripts/subword-nmt/apply_bpe.py --codes BPE/bpe.model \
+								  | $(KENLM_BIN)/lmplz -S 1G --discount_fallback -o 3 \
+								  > LM/pages_lm.arpa
 	touch $@
 
-### CREATE BINARY ###                                                                                                                              
+### CREATE BINARY ###
  
 LM/LM.BINARY.DONE: LM/LM.ARPA.DONE
 	$(KENLM_BIN)/build_binary -s LM/necrologies_lm.arpa LM/necrologies_lm.klm
@@ -199,6 +219,10 @@ train-unpack: $(TRAIN_UNPACK_TARGETS)
 	@echo "FINISHED UNPACKING ALL NEWSPAPERS"
 
 #################
+
+### 2. TRAIN BPE ###
+
+train-bpe: BPE/bpe.model
 
 ### 2. GENERATE RECTANGLES ###
 
