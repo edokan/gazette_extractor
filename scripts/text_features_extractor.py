@@ -1,9 +1,8 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-"""Prints text features of the given rectangle,                                                                                                                                                  
-   each xml given as stdin should be cleaned by wrong_chars_xml_cleaner                                                                                                                         
-   as the positional argument must be given .rect file                                                                                                                                           
+"""Prints text features of the given rectangle,
+   each xml given as stdin should be cleaned by xml_cleaner
 """
 
 import sys
@@ -17,36 +16,32 @@ from common_text_features_functions import *
 
 def get_chars_amount(words_list):
     """Returns number of chars in rectangle
-       Parameters:
-       ----------
-       words_list : list of words generated from cut_xml() function
+       Args:
+           words_list : list of words generated from cut_xml() function
     """
     return sum([len(word) for word in words_list])
 
 def get_words_amount(words_list):
     """Returns number of words in rectangle
-       Parameters:
-       ----------
-       words_list : list of words generated from cut_xml() function
+       Args:
+           words_list : list of words generated from cut_xml() function
     """
     return len(words_list)
 
 def get_letters_amount(chars_counter, punct_counter):
     """Returns diff between chars amount and punctation amount,
        counts how many letters we have.
-       Parameters:
-       ----------
-       chars_counter : tells about number of chars
-       punct_counter : tells about number of punctation
+       Args:
+           chars_counter : tells about number of chars
+           punct_counter : tells about number of punctation
     """
     if (chars_counter - punct_counter < 0): return 0
     else : return chars_counter - punct_counter
 
 def get_vowels_consonants_amount(words_list):
     """Returns vowels and consonants number in rectangle
-       Parameters:
-       ----------
-       words_list : list of words generated from cut_xml() function
+       Args:
+          words_list : list of words generated from cut_xml() function
     """
     vowel_counter = 0
     consonants_counter = 0
@@ -58,9 +53,8 @@ def get_vowels_consonants_amount(words_list):
 
 def get_numbers_amount(words_list):
     """Returns amount of numbers in rectangle
-       Parameters:
-       ----------
-       words_list : list of words generated from cut_xml() function
+       Args:
+           words_list : list of words generated from cut_xml() function
     """
     digit_counter = 0
     for word in words_list:
@@ -70,9 +64,8 @@ def get_numbers_amount(words_list):
 
 def remove_special_characters(words_list):
     """ Returns list with replaced vw special characters                                                                                                                                        
-        Parameters:                                                                                                                                                                              
-        ----------                                                                                                                                                                               
-        words_list : list of words generated from cut_xml() function                                                                                                                             
+        Args:                                                                                                                                                                               
+            words_list : list of words generated from cut_xml() function
     """
     sentence_h = list(" ".join(words_list))
     sentence = []
@@ -83,9 +76,8 @@ def remove_special_characters(words_list):
     
 def get_trigrams(words_list):
    """Returns chars trigrams
-      Parameters:
-      ----------
-      words_list : list of words generated from cut_xml() function
+      Args:
+          words_list : list of words generated from cut_xml() function
    """
    sentence = remove_special_characters(words_list)
    trigrams = []
@@ -99,9 +91,8 @@ def get_trigrams(words_list):
 
 def get_unigrams(words_list):
     """Returns chars unigrams
-       Parameters:
-       ----------
-       words_list : list of words generated from cut_xml() function
+       Args:
+           words_list : list of words generated from cut_xml() function
     """
     sentence = remove_special_characters(words_list)
     unigrams = ["CHAR+" + letter for letter in sentence]
@@ -109,9 +100,8 @@ def get_unigrams(words_list):
 
 def get_bigrams(words_list):
     """Returns chars bigrams
-       Parameters:
-       ----------
-       words_list : list of words generated from cut_xml() function
+       Args:
+           words_list : list of words generated from cut_xml() function
     """
     sentence = remove_special_characters(words_list)
     bigrams = []
@@ -145,14 +135,14 @@ if __name__ == "__main__":
     for coord_input in coords_input :
         text_feature = OrderedDict()
         words_list = cut_xml(coord_input[0], coord_input[1], coord_input[2], coord_input[3], root)
-######## NUMBER FEATURES
+        #NUMERIC FEATURES
         text_feature["CHARS_AMOUNT:"] = get_chars_amount(words_list)
         text_feature["WORDS_AMOUNT:"] = get_words_amount(words_list)
         text_feature["PUNCT_AMOUNT:"] = get_punct_amount(words_list)
         text_feature["LETTERS_AMOUNT:"] = get_letters_amount(text_feature["CHARS_AMOUNT:"], text_feature["PUNCT_AMOUNT:"])
         text_feature["VOWELS_AMOUNT:"], text_feature["CONSONANTS_AMOUNT:"] = get_vowels_consonants_amount(words_list)
         text_feature["DIGITS_AMOUNT:"] = get_numbers_amount(words_list)
-######## STRING FEATURES
+        #STRING FEATURES
         text_feature[get_trigrams(words_list)] = ""
         text_feature[get_bigrams(words_list)] = ""
         text_feature[get_unigrams(words_list)] = ""

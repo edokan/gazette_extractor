@@ -1,7 +1,7 @@
 #!/usr/bin/python3                                                                                                                                                                               
 # -*- coding: utf-8 -*-  
 
-"""Script which creates a corpora based on pages which contain necrologies.
+"""Script which creates a corpora based on pages which contain necrologies. Normalization - lowercase.
 """
 import sys
 import argparse

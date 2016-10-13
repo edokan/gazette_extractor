@@ -1,3 +1,7 @@
+"""Removes forbidden chars from xml file. By forbidden chars are understood :
+   - chars which cause xml parser failing.
+   - non unicode chars.
+"""
 BYTE_OFFSETS = True
 import sys, re, codecs
 

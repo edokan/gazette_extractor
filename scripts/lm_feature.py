@@ -1,6 +1,9 @@
 #!/usr/bin/python3                                                                                                                                                                               # -*- coding: utf-8 -*-
-"""Script which calculates lm for the gazette based on file where features of rectangle are kept.
+"""Script which:
+       - calculates lm score of rectangle based on necrologies language model.
+       - calculates lm of page based on pages with necrologies language model. Used with BPE.
 """
+
 import sys, os
 sys.path.insert(0, os.getcwd() + "/scripts/subword-nmt")
 import re
@@ -55,5 +58,6 @@ if __name__ == "__main__":
             with open(page_file) as page_txt:
                 bpe_text = bpe.segment((" ".join(page_txt.readlines())).lower().strip())
                 page_lm_score = pages_lm.score(bpe_text)
-                sys.stdout.write("LM_PAGE_SCORE:" + str(page_lm_score) + "\n")
+                sys.stdout.write("LM_PAGE_SCORE:" + str(page_lm_score))
             
+            sys.stdout.write("\n")

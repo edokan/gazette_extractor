@@ -1,17 +1,16 @@
 #!/usr/bin/python3                                                                                                                                                                              
 # -*- coding: utf-8 -*-       
 
-"""Module which contains functions which are used more than once in text features scripts
+"""Module which contains functions which are used more than once in text features extraction scripts
 """
 
 import xml.etree.ElementTree as ET
 import string
 
 def cut_xml(_x1, _y1, _x2, _y2, root):
-    """Returns words which are in rectangle (based on given xml)                                                                                                                                 
-       Parameters:                                                                                                                                                                               
-       ----------                                                                                                                                                                                
-       _x1, _y1, _x2, _y2 : coordinates of rectangle                                                                                                                                             
+    """Returns text, contained in specified area (recognized rectangle in newspaper), from xml file.
+       Args:                                                                                                 
+           _x1, _y1, _x2, _y2 : coordinates of area (recognized rectangle in newspaper).
     """
     words_list = []
     for word in root.iter('WORD'):
@@ -26,10 +25,9 @@ def cut_xml(_x1, _y1, _x2, _y2, root):
     return words_list
 
 def get_punct_amount(words_list):
-    """Returns number of punctation in rectangle                                                                                                                                                 
-       Parameters:                                                                                                                                                                               
-       ----------                                                                                                                                                                                
-       words_list : list of words generated from cut_xml() function                                                                                                                              
+    """Returns number of punctation in rectangle                                                                                                                                  
+       Args:                                                                                                                                                                
+           words_list : list of words in which we need to check amount of punctation
     """
     count = lambda l1, l2: len(list(filter(lambda c: c in l2, l1)))
     return sum([count(word, string.punctuation) for word in words_list])

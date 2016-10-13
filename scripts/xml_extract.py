@@ -2,12 +2,9 @@
 # -*- coding: utf-8 -*-      
 
 """Prints coordinates of paragraphs, words and lines due to given .xml file
-   .xml file needs to be cleaned by wrong_chars_xml_cleaner.py
+   .xml file needs to be cleaned by xml_cleaner.py
    Helps in checking what is word and what is the picture fragment.
 """
-#Skrypt, kory wyrzuca koordynaty slow, paragrafow oraz linii wg podanego xmla
-#ROGER THAT: plik xml MUSI byc przepuszczony przez skrypt wrong_chars_xml_cleaner.py, ktory usuwa niedozwolone znaki z pliku xml.
-
 import sys
 import xml.etree.ElementTree as ET
 import string
@@ -23,20 +20,10 @@ except:
 para_begin_end = []
 output_words_lines = []
 
-#def get_punct_amount(txt):
-#    """Returns punctation amount
-#       Parameters:
-#       ----------
-#       txt : string which needs to be checked
-#    """
-#    count = lambda l1, l2: len(list(filter(lambda c: c in l2, l1)))
-#    return sum([count(word, string.punctuation) for word in txt])
-
 def get_alpha(line):
     """Returns alphanumeric chars amount
-       Parameters:
-       ----------
-       line : string which needs to be checked
+       Args:
+           line : string which needs to be checked
     """
     alpha = 0
     for letter in line:
@@ -45,8 +32,8 @@ def get_alpha(line):
 
 def check_paragraph(para_xml):
     """Checks if paragraphs contains trash, returns true if not and false if yes
-       Parameters:
-       para_xml : xml of paragraph
+       Args:
+           para_xml : xml of paragraph
     """
     root = ET.fromstring(para_xml)
     text = ""
@@ -78,9 +65,8 @@ def create_words_lines_output(coordinates_words):
 
 def get_words_xml(line_xml):
     """Get words from .xml
-       Parameters:
-       ----------
-       line_xml : xml of line
+       Args:
+           line_xml : xml of line
     """
     root = ET.fromstring(line_xml)
     coordinates_word = {}
@@ -97,9 +83,8 @@ def get_words_xml(line_xml):
 
 def get_lines_xml(para_xml):
     """Get lines from xml
-       Parameters:
-       ----------
-       para_xml : xml of paragraph
+       Args:
+           para_xml : xml of paragraph
     """
     root = ET.fromstring(para_xml)
     for line in root.iter("LINE"):
