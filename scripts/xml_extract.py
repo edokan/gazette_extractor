@@ -11,27 +11,26 @@
 import sys
 import xml.etree.ElementTree as ET
 import string
+from common_text_features_functions import get_punct_amount
 
-if __name__ == "__main__":
-
-    try:
-        tree_xml = ""
-        for line in sys.stdin: tree_xml += line
-        root = ET.fromstring(tree_xml)
-    except:
-        exit(0)
+try:
+    tree_xml = ""
+    for line in sys.stdin: tree_xml += line
+    root = ET.fromstring(tree_xml)
+except:
+    exit(0)
 
 para_begin_end = []
 output_words_lines = []
 
-def get_punct_amount(txt):
-    """Returns punctation amount
-       Parameters:
-       ----------
-       txt : string which needs to be checked
-    """
-    count = lambda l1, l2: len(list(filter(lambda c: c in l2, l1)))
-    return sum([count(word, string.punctuation) for word in txt])
+#def get_punct_amount(txt):
+#    """Returns punctation amount
+#       Parameters:
+#       ----------
+#       txt : string which needs to be checked
+#    """
+#    count = lambda l1, l2: len(list(filter(lambda c: c in l2, l1)))
+#    return sum([count(word, string.punctuation) for word in txt])
 
 def get_alpha(line):
     """Returns alphanumeric chars amount
