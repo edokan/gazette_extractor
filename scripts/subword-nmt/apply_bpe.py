@@ -17,6 +17,7 @@ import sys
 import codecs
 import argparse
 from collections import defaultdict
+import pickle
 
 # hack for python2/3 compatibility
 from io import open
@@ -28,18 +29,13 @@ if sys.version_info < (3, 0):
   sys.stdout = codecs.getwriter('UTF-8')(sys.stdout)
   sys.stdin = codecs.getreader('UTF-8')(sys.stdin)
 
-import codecs
-
 class BPE(object):
 
     def __init__(self, codes, separator='@@'):            
         
-        with codecs.open(codes.name, encoding='utf-8') as codes:
-            self.bpe_codes = [tuple(item.split()) for item in codes]
+        with open(codes.name, 'rb') as handle:
+            self.bpe_codes = pickle.load(handle)
          
-        # some hacking to deal with duplicates (only consider first instance)
-        self.bpe_codes = dict([(code,i) for (i,code) in reversed(list(enumerate(self.bpe_codes)))])
-
         self.separator = separator
 
     def segment(self, sentence):

@@ -17,7 +17,7 @@ SHELL = /bin/bash
 ### CONFIGURE ME ###
 
 INPUT_DIR = ~/Nekrologi
-KENLM_BIN = ~/kenlm/bin
+KENLM_BIN = ~/kenlm/build/bin
 VOWPAL_WABBIT_DIR = ~/vowpal_wabbit/vowpalwabbit
 
 ### INSTALL ###
@@ -154,6 +154,9 @@ BPE/bpe.model: $(TRAIN_UNPACK_TARGETS)
 					  | ./scripts/subword-nmt/learn_bpe.py -v \
 					  > $@
 
+BPE/bpe.bin: BPE/bpe.model
+	python ./scripts/subword-nmt/binarize_bpe.py $^ $@
+
 ### CREATE LM OBITUARY CORPUS ###
 
 
@@ -163,9 +166,9 @@ LM/LM.CORPORA.DONE: $(TRAIN_GENERATE_TARGETS)
 
 ### CREATE .ARPA ###
  
-LM/LM.ARPA.DONE: LM/LM.CORPORA.DONE BPE/bpe.model
+LM/LM.ARPA.DONE: BPE/bpe.bin LM/LM.CORPORA.DONE
 	cat LM/corpus_necrologies.txt | sed 's/./& /g' | $(KENLM_BIN)/lmplz -S 1G --discount_fallback -o 3 > LM/necrologies_lm.arpa
-	cat LM/corpus_pages.txt | ./scripts/subword-nmt/apply_bpe.py --codes BPE/bpe.model \
+	cat LM/corpus_pages.txt | ./scripts/subword-nmt/apply_bpe.py --codes $< \
 								  | $(KENLM_BIN)/lmplz -S 1G --discount_fallback -o 3 \
 								  > LM/pages_lm.arpa
 	touch $@
@@ -223,7 +226,7 @@ train-unpack: $(TRAIN_UNPACK_TARGETS)
 
 ### 2. TRAIN BPE ###
 
-train-bpe: BPE/bpe.model
+train-bpe: BPE/bpe.bin
 
 ### 2. GENERATE RECTANGLES ###
 
