@@ -8,10 +8,16 @@ import xml.etree.ElementTree as ET
 import string
 
 def cut_xml(_x1, _y1, _x2, _y2, root):
-    """Returns text, contained in specified area (recognized rectangle in newspaper), from xml file.
-       Args:                                                                                                 
-           _x1, _y1, _x2, _y2 : coordinates of area (recognized rectangle in newspaper).
     """
+    Returns text, contained in specified area (recognized rectangle in newspaper), from xml file.
+
+    Args:
+        _x1 (int) : Upper left-sided x coordinate
+        _y1 (int) : Upper left-sided y coordinate
+        _x2 (int) : Lower right-sided x coordinate
+        _y2 (int) : Lower right-sided y coordinate
+    """
+
     words_list = []
     for word in root.iter('WORD'):
         if word.text is not None:
@@ -25,9 +31,12 @@ def cut_xml(_x1, _y1, _x2, _y2, root):
     return words_list
 
 def get_punct_amount(words_list):
-    """Returns number of punctation in rectangle                                                                                                                                  
-       Args:                                                                                                                                                                
-           words_list : list of words in which we need to check amount of punctation
     """
+    Returns number of punctation in desired rectangle.
+
+    Args:
+        words_list (list) : list of words in which we need to check amount of punctation
+    """
+
     count = lambda l1, l2: len(list(filter(lambda c: c in l2, l1)))
     return sum([count(word, string.punctuation) for word in words_list])

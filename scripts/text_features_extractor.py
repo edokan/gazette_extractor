@@ -1,8 +1,9 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-"""Prints text features of the given rectangle,
-   each xml given as stdin should be cleaned by xml_cleaner
+"""
+Prints text features of the given rectangle,
+each xml given as stdin should be cleaned by xml_cleaner
 """
 
 import sys
@@ -15,33 +16,42 @@ from collections import OrderedDict
 from common_text_features_functions import *
 
 def get_chars_amount(words_list):
-    """Returns number of chars in rectangle
-       Args:
-           words_list : list of words generated from cut_xml() function
     """
+    Returns number of chars in desired rectangle.
+
+    Args:
+        words_list (list) : list of words from rectangle
+    """
+
     return sum([len(word) for word in words_list])
 
 def get_words_amount(words_list):
-    """Returns number of words in rectangle
-       Args:
-           words_list : list of words generated from cut_xml() function
+    """
+    Returns number of words in desired rectangle.
+
+    Args:
+        words_list (list) : list of words from rectangle
     """
     return len(words_list)
 
 def get_letters_amount(chars_counter, punct_counter):
-    """Returns diff between chars amount and punctation amount,
-       counts how many letters we have.
-       Args:
-           chars_counter : tells about number of chars
-           punct_counter : tells about number of punctation
     """
+    Returns diff between chars amount and punctation amount, counts how many letters we have.
+
+    Args:
+        chars_counter (int) : tells about number of chars
+        punct_counter (int) : tells about number of punctation
+    """
+
     if (chars_counter - punct_counter < 0): return 0
     else : return chars_counter - punct_counter
 
 def get_vowels_consonants_amount(words_list):
-    """Returns vowels and consonants number in rectangle
-       Args:
-          words_list : list of words generated from cut_xml() function
+    """
+    Returns diff bvowels and consonants numer in rectangle.
+
+    Args:
+        words_list (list) : list of words from rectangle
     """
     vowel_counter = 0
     consonants_counter = 0
@@ -52,10 +62,13 @@ def get_vowels_consonants_amount(words_list):
     return vowel_counter, consonants_counter
 
 def get_numbers_amount(words_list):
-    """Returns amount of numbers in rectangle
-       Args:
-           words_list : list of words generated from cut_xml() function
     """
+    Returns amount of numers in rectangle.
+
+    Args:
+        words_list (list) : list of words from rectangle
+    """
+
     digit_counter = 0
     for word in words_list:
         for letter in word:
@@ -63,9 +76,11 @@ def get_numbers_amount(words_list):
     return digit_counter
 
 def remove_special_characters(words_list):
-    """ Returns list with replaced vw special characters                                                                                                                                        
-        Args:                                                                                                                                                                               
-            words_list : list of words generated from cut_xml() function
+    """
+    Returns sentence with replaced special characters from vowpal wabbit ( " " -> "SPACE", ":" -> "COLON", "|" -> "PIPE").
+
+    Args:
+        words_list (list) : list of words from rectangle
     """
     sentence_h = list(" ".join(words_list))
     sentence = []
@@ -75,33 +90,28 @@ def remove_special_characters(words_list):
     return sentence
     
 def get_trigrams(words_list):
-   """Returns chars trigrams
-      Args:
-          words_list : list of words generated from cut_xml() function
-   """
-   sentence = remove_special_characters(words_list)
-   trigrams = []
-   if len(sentence) >= 3:
-       index = 0
-       while index < len(sentence) - 2:
-           trigrams.append("TRIGRAM+" + str(sentence[index]) + str(sentence[index + 1]) + str(sentence[index + 2]))
-           index += 1
-            
-   return " ".join(trigrams)
+    """
+    Returns char trigrams.
 
-def get_unigrams(words_list):
-    """Returns chars unigrams
-       Args:
-           words_list : list of words generated from cut_xml() function
+    Args:
+        words_list (list) : list of words from rectangle
     """
     sentence = remove_special_characters(words_list)
-    unigrams = ["CHAR+" + letter for letter in sentence]
-    return " ".join(unigrams)
+    trigrams = []
+    if len(sentence) >= 3:
+        index = 0
+        while index < len(sentence) - 2:
+            trigrams.append("TRIGRAM+" + str(sentence[index]) + str(sentence[index + 1]) + str(sentence[index + 2]))
+            index += 1
+            
+    return " ".join(trigrams)
 
 def get_bigrams(words_list):
-    """Returns chars bigrams
-       Args:
-           words_list : list of words generated from cut_xml() function
+    """
+    Returns char bigrams.
+
+    Args:
+        words_list (list) : list of words from rectangle
     """
     sentence = remove_special_characters(words_list)
     bigrams = []
@@ -111,7 +121,18 @@ def get_bigrams(words_list):
             bigrams.append("BIGRAM+" + str(sentence[index]) + str(sentence[index + 1]))
             index += 1
     return " ".join(bigrams)
-              
+
+def get_unigrams(words_list):
+    """
+    Returns char unigrams.
+
+    Args:
+        words_list (list) : list of words from rectangle
+    """
+    sentence = remove_special_characters(words_list)
+    unigrams = ["CHAR+" + letter for letter in sentence]
+    return " ".join(unigrams)
+
 if __name__ == "__main__":
     coords_input = []
 

@@ -1,14 +1,15 @@
 #!/usr/bin/python3                                                                                                                                   
 # -*- coding: utf-8 -*-       
+"""
+Script which creates a corpus based on nercrologies. Normalization - lowercasing.
+"""
 import sys
 import argparse
 import xml.etree.ElementTree as ET
 from common_text_features_functions import cut_xml
 
 if __name__ == "__main__":
-    """                                                                                                                                                                                          
-    Script which creates a corpus based on necrologies. Normalization - lowercase.                                                                                                              
-    """
+
     parser = argparse.ArgumentParser(description="Extract necrologies text from xml file of page to corpus file.")
     parser.add_argument('-fn', help="Filename where coordinates and page number of necrologue are kept. -> gazettetitle.necro")
     args = parser.parse_args()

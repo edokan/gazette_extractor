@@ -1,29 +1,25 @@
 #!/usr/bin/python3                                                                                                                                   
 # -*- coding: utf-8 -*-      
 
-"""Prints coordinates of paragraphs, words and lines due to given .xml file
-   .xml file needs to be cleaned by xml_cleaner.py
-   Helps in checking what is word and what is the picture fragment.
+"""
+Prints coordinates of paragraphs, words and lines due to given .xml file
+.xml file needs to be cleaned by xml_cleaner.py
+Helps in checking what is word and what is the picture fragment.
 """
 import sys
 import xml.etree.ElementTree as ET
 import string
 from common_text_features_functions import get_punct_amount
 
-#try:
-#    tree_xml = ""
-#    for line in sys.stdin: tree_xml += line
-#    root = ET.fromstring(tree_xml)
-#except:
-#    exit(0)
-
 para_begin_end = []
 output_words_lines = []
 
 def get_alpha(line):
-    """Returns alphanumeric chars amount
-       Args:
-           line : string which needs to be checked
+    """
+    Returns amount of alphanumeric chars.
+
+    Args:
+        line (str) : string which needs to be checked
     """
     alpha = 0
     for letter in line:
@@ -31,9 +27,11 @@ def get_alpha(line):
     return alpha
 
 def check_paragraph(para_xml):
-    """Checks if paragraphs contains trash, returns true if not and false if yes
-       Args:
-           para_xml : xml of paragraph
+    """
+    Checks if paragraphs contains trash, returns true if not and false if yes
+
+    Args:
+        para_xml (str) : xml of paragraph
     """
     root = ET.fromstring(para_xml)
     text = ""
@@ -43,13 +41,15 @@ def check_paragraph(para_xml):
     else : return 0
     
 def create_output():
-    """Prints out the final output
+    """
+    Prints out the final output
     """
     sys.stdout.write("PARAGRAPH\t" + str(para_begin_end[0][0]) + " " + str(para_begin_end[0][1]) + " " + str(para_begin_end[-1][2]) + " " + str(para_begin_end[-1][3]) + "\n")
     for records in output_words_lines : sys.stdout.write(records + "\n")
 
 def create_words_lines_output(coordinates_words):
-    """Function which helps in making data for lines and words
+    """
+    Function which helps in making data for lines and words
     """
     coordinates = []
     for key, value in coordinates_words.items():
@@ -64,9 +64,11 @@ def create_words_lines_output(coordinates_words):
         output_words_lines.append("WORD\t" + ' '.join(keys) + ' ' + value)
 
 def get_words_xml(line_xml):
-    """Get words from .xml
-       Args:
-           line_xml : xml of line
+    """
+    Get words from xml file
+
+    Args:
+        line_xml (str) : xml of "LINE"
     """
     root = ET.fromstring(line_xml)
     coordinates_word = {}
@@ -82,9 +84,11 @@ def get_words_xml(line_xml):
     if coordinates_word : create_words_lines_output(coordinates_word)
 
 def get_lines_xml(para_xml):
-    """Get lines from xml
-       Args:
-           para_xml : xml of paragraph
+    """
+    Get lines from xml
+
+    Args:
+        para_xml (str) : xml of "PARAGRAPH"
     """
     root = ET.fromstring(para_xml)
     for line in root.iter("LINE"):
@@ -92,7 +96,8 @@ def get_lines_xml(para_xml):
         get_words_xml(line_xml)
         
 def get_paragraphs_xml(root):
-    """Get paragraphs from xml
+    """
+    Get paragraphs from xml
     """
     para_xml = ""
     for line in root.iter("PARAGRAPH"):

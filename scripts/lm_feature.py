@@ -1,7 +1,8 @@
 #!/usr/bin/python3                                                                                                                                                                               # -*- coding: utf-8 -*-
-"""Script which:
-       - calculates lm score of rectangle based on necrologies language model.
-       - calculates lm of page based on pages with necrologies language model. Used with BPE.
+"""
+Script which:
+- calculates lm score of rectangle based on necrologies language model.
+- calculates lm of page based on pages with necrologies language model. Used with BPE.
 """
 
 import sys, os
