@@ -1,4 +1,4 @@
-detect_peaks.py
+detect_peaks module
 ===================
 
 .. automodule:: detect_peaks

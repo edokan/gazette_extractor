@@ -1,4 +1,4 @@
-graphic_features_extractor.py
+graphic_features_extractor module
 =================================
 
 .. automodule:: graphic_features_extractor

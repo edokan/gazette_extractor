@@ -1,4 +1,4 @@
-extract_necro.py
+extract_necro module
 ====================
 
 .. automodule:: extract_necro

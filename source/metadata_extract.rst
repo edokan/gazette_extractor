@@ -1,4 +1,4 @@
-metadata_extract.py
+metadata_extract module
 =======================
 
 .. automodule:: metadata_extract

@@ -1,4 +1,4 @@
-classify_rectangles.py
+classify_rectangles module
 ==========================
 
 .. automodule:: classify_rectangles

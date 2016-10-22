@@ -1,4 +1,4 @@
-#####################################################################################################
+####################################################################################################
 #																									#
 #										MOTHERSHIP MAKEFILE											#
 #																									#
@@ -17,7 +17,7 @@ SHELL = /bin/bash
 ### CONFIGURE ME ###
 
 INPUT_DIR = ~/Nekrologi
-KENLM_BIN = ~/kenlm/build/bin
+KENLM_BIN = ~/kenlm/bin
 VOWPAL_WABBIT_DIR = ~/vowpal_wabbit/vowpalwabbit
 
 ### INSTALL ###
@@ -325,5 +325,12 @@ test-merge: test-A/out.tsv
 test-A/out.tsv: $(TEST_EXTRACT_TARGETS)
 	cat test-A/*.out.tsv | python3 ./scripts/merge_necro.py -i test-A/in.tsv > test-A/out.tsv
 
+##################
+
+### 1. CUT-NECRO
+
+cut-necro: test-A/in.tsv test-A/out.tsv
+	paste -d" " test-A/in.tsv test-A/out.tsv > test-A/result.tsv
+	python ./scripts/cut_necro.py -res test-A/result.tsv
 
 ####################################################################################################

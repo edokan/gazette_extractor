@@ -1,4 +1,4 @@
-merge_necro.py
+merge_necro module
 ==================
 
 .. automodule:: merge_necro

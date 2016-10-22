@@ -1,4 +1,4 @@
-split_necro.py
+split_necro module
 ==================
 
 .. automodule:: split_necro

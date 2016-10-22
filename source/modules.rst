@@ -1,5 +1,5 @@
-Documentation
-=============
+scripts
+=======
 
 .. toctree::
    :maxdepth: 4
@@ -8,6 +8,7 @@ Documentation
    common_text_features_functions
    create_corpus_necrologies
    create_corpus_pages
+   cut_necro
    detect_peaks
    extract_necro
    graphic_features_extractor
