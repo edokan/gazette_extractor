@@ -17,7 +17,7 @@ SHELL = /bin/bash
 ### CONFIGURE ME ###
 
 INPUT_DIR = ~/Nekrologi
-KENLM_BIN = ~/kenlm/bin
+KENLM_BIN = ~/kenlm/build/bin
 VOWPAL_WABBIT_DIR = ~/vowpal_wabbit/vowpalwabbit
 
 ### INSTALL ###
@@ -86,13 +86,15 @@ train-purge:
 		   train/train.* \
 		   LM/*.txt \
 		   LM/necrologies_lm.* \
-		   LM/*.DONE
+		   LM/*.DONE \
+		   BPE/*
 
 train-clean:
 	rm -rf train/train.*
 	rm -rf LM/*.txt \
 		LM/necrologies_lm.* \
-		LM/*.DONE
+		LM/*.DONE \
+		BPE/*
 
 test-purge:
 	rm -rf test-A/*/ \
@@ -161,6 +163,7 @@ BPE/bpe.bin: BPE/bpe.model
 
 
 LM/LM.CORPORA.DONE: $(TRAIN_GENERATE_TARGETS)
+	mkdir -p $(@D)
 	./scripts/create_corpus.sh "$(TRAIN_DJVU_LIST)"
 	touch $@
 

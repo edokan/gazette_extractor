@@ -23,7 +23,9 @@ class RectangleGenerator():
         self.load_coordinates()
         self.original = cv2.imread(f_path)
         self.thickened = self.preprocess_image()
-        self.find_rectangles(l, u, verbose)
+        self.rectangles = self.find_rectangles(l, u, verbose)
+        self.filtered_rect = self.remove_duplicates()
+        self.print_rectangles()
 
     def load_coordinates(self):
         """
@@ -78,6 +80,88 @@ class RectangleGenerator():
 
         return thickened
 
+    def check_if_near(self, a, b):
+        """
+        Check if two rectangles are near each other.
+
+        Args:
+            a (tuple): First rectangle.
+            b (tuple): Second rectangle.
+        """
+
+        x1_a, y1_a, x2_a, y2_a = a
+        x1_b, y1_b, x2_b, y2_b = b
+
+        x1_a_b = float(x1_a) / x1_b
+        x1_b_a = float(x1_b) / x1_a
+        y1_a_b = float(y1_a) / y1_b
+        y1_b_a = float(y1_b) / y1_a
+        x2_a_b = float(x2_a) / x2_b
+        x2_b_a = float(x2_b) / x2_a
+        y2_a_b = float(y2_a) / y2_b
+        y2_b_a = float(y2_b) / y2_a
+
+        gt_1 = [y1_a_b, x2_a_b]
+        lt_1 = [x1_a_b, y2_a_b]
+
+        errors = [min(x1_a_b, x1_b_a),
+                  min(y1_a_b, y1_b_a),
+                  min(x2_a_b, x2_b_a),
+                  min(y2_a_b, y2_b_a)]
+
+        # sys.stderr.write(str(a) + " | " + str(b))
+        # sys.stderr.write("\n")
+        # for e in errors:
+            # sys.stderr.write(str(e) + " ")
+        # sys.stderr.write("\n")
+
+        if sum(e >= 0.8 for e in errors) >= 2:
+            gt = sum(g >= 1 for g in gt_1)
+            lt = sum(l < 1 for l in lt_1)
+            if gt + lt >= 2:
+                return True, a
+            else:
+                return True, b
+        else:
+            return False, []
+
+    def remove_duplicates(self):
+        """
+        Filter generated rectangles from potential duplicates.
+        """
+
+        result = []
+        duplicates = set()
+        for a in self.rectangles:
+            if a in duplicates:
+                continue
+            found = False
+            for b in self.rectangles:
+                if a == b:
+                    continue
+                is_close, bigger = self.check_if_near(a, b)
+                if is_close and not found:
+                    result.append(bigger)
+                    duplicates.add(b)
+                    found = True
+            if not found:
+                result.append(a)
+        return result
+
+    def print_rectangles(self):
+        """
+        Print generated rectangles.
+        """
+
+        for x1, y1, x2, y2 in self.filtered_rect:
+            rectangle = {"X1": str(x1),
+                         "Y1": str(y1),
+                         "X2": str(x2),
+                         "Y2": str(y2)}
+            for param in ["X1", "Y1", "X2", "Y2"]:
+                sys.stdout.write(param + ":" + str(rectangle[param]) + " ")
+            sys.stdout.write("\n")
+
     def find_rectangles(self, l, u, verbose):
         """
         Find potential necrology coordinates and print them.
@@ -125,12 +209,7 @@ class RectangleGenerator():
 
             cv2.imwrite(rect_output, rect_image)
             cv2.imwrite(skel_output, self.thickened)
-
-        for x1, y1, x2, y2 in rectangles:
-            rectangle = {"X1": str(x1), "Y1": str(y1), "X2": str(x2), "Y2": str(y2)}
-            for param in ["X1", "Y1", "X2", "Y2"]:
-                sys.stdout.write(param + ":" + str(rectangle[param]) + " ")
-            sys.stdout.write("\n")
+        return rectangles
 
 
 def parse_args():
