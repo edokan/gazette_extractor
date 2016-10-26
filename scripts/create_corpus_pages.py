@@ -18,13 +18,9 @@ if __name__ == "__main__":
 
     with open(filename) as necrologues_data:
         for line in necrologues_data:
-            for necrologue_data in line.split(" "):
+            for necrologue_data in line.split(" ")[1:]:
                 data = necrologue_data.split("/")
-                if len(data) == 2 :
-                    page = data[0]
-                else: 
-                     sys.exit("No necrologies found or corrupted data")
-
+                page = data[0]
                 page_with_necro = str(gazette_title) + "/page_" + str(page) + ".txt"
 
                 with open(page_with_necro) as page_data:

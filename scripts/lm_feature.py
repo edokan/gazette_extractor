@@ -28,7 +28,8 @@ if __name__ == "__main__":
     bpe = BPE(args.codes, "@@")
 
     vw_file = args.vw
-    gazette_title = vw_file.replace(".without_lm.vw", "")
+    file_name = os.path.basename(vw_file)
+    gazette_title = vw_file.replace(file_name, "")
 
     with open(vw_file) as rectangles_to_check:
         for rectangle in rectangles_to_check.readlines():
