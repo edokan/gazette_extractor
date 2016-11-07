@@ -20,14 +20,11 @@ if __name__ == "__main__":
 
     with open(filename) as necrologues_data:
         for line in necrologues_data:
-            for necrologue_data in line.split(" "):
+            for necrologue_data in line.split(" ")[1:]:
                 data = necrologue_data.split("/")
-                if len(data) == 2 : 
-                    coordinates = data[1]
-                    page = data[0]
-                    necrologue[coordinates] = page
-                else:
-                    sys.exit("No necrologies found or corrupted data")
+                coordinates = data[1]
+                page = data[0]
+                necrologue[coordinates] = page
 
     for coord, page in necrologue.items():
         coordinates = coord.split(",")
