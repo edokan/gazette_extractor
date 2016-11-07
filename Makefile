@@ -28,6 +28,10 @@ install-doc:
 
 install:
 	## TODO Tutaj bedzie instalacja wszystkich paczek i bibliotek.
+	sudo apt-get install python-opencv
+	pip install https://github.com/kpu/kenlm/archive/master.zip
+	sudo pip install -U nltk
+
 	@echo "Finished installing!"
 
 ######################################### TARGETS ##################################################
