@@ -17,7 +17,7 @@ SHELL = /bin/bash
 ### CONFIGURE ME ###
 
 INPUT_DIR = ~/Nekrologi
-KENLM_BIN = ~/kenlm/build/bin
+KENLM_BIN = ~/kenlm/build
 VOWPAL_WABBIT_DIR = ~/vowpal_wabbit/vowpalwabbit
 
 ### INSTALL ###
@@ -25,6 +25,7 @@ VOWPAL_WABBIT_DIR = ~/vowpal_wabbit/vowpalwabbit
 install-doc:
 	sudo apt-get install python-sphinx
 	pip install sphinxcontrib-napoleon --user
+	pip install rst2pdf
 
 install:
 	## TODO Tutaj bedzie instalacja wszystkich paczek i bibliotek.
