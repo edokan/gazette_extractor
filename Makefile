@@ -25,6 +25,7 @@ VOWPAL_WABBIT_DIR = ~/vowpal_wabbit/vowpalwabbit
 install-doc:
 	sudo apt-get install python-sphinx
 	pip install sphinxcontrib-napoleon --user
+	pip install rst2pdf
 
 install:
 	## TODO Tutaj bedzie instalacja wszystkich paczek i bibliotek.

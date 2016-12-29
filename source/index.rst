@@ -18,6 +18,8 @@ Contents
 
    introduction
 
+   manual
+
    modules
 
 
