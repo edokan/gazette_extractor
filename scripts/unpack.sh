@@ -16,7 +16,7 @@ djvused -u ${DDJVU_FILE} -e 'print-meta' > ${DIR}/metadata.tsv
 for i in $(seq 1 $PAGES)
 do
     #Extracting page in tiff.
-    ddjvu -format=tiff -quality=60 -mode=color -page=$i ${DDJVU_FILE} ${DIR}/page_$i.tiff
+    ddjvu -format=tiff -quality=25 -mode=color -page=$i ${DDJVU_FILE} ${DIR}/page_$i.tiff
 
     #Extracting page xml.
     djvutoxml --with-anno --with-text --page $i ${DDJVU_FILE} ${DIR}/page_$i.xml

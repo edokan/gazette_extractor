@@ -8,7 +8,8 @@
 	split-data \
 	clean purge train-clean train-purge test-clean test-purge \
 	train train-split train-unpack train-generate train-classify train-lm train-analyze train-merge train-vw \
-	test test-unpack test-generate test-analyze test-predict test-merge
+	test test-unpack test-generate test-analyze test-predict test-merge \
+	dev dev-unpack dev-generate dev-analyze dev-predict dev-merge
 
 .SECONDARY:
 
@@ -16,7 +17,6 @@ SHELL = /bin/bash
 
 ### CONFIGURE ME ###
 
-INPUT_DIR = ~/Nekrologi
 KENLM_BIN = ~/kenlm/build/bin
 VOWPAL_WABBIT_DIR = ~/vowpal_wabbit/vowpalwabbit
 
@@ -56,6 +56,27 @@ TRAIN_ANALYZE_TARGETS = $(patsubst %.djvu,\
 								 $(TRAIN_DJVU_LIST))
 TRAIN_MERGE_TARGETS = train/train.vw
 TRAIN_VW_TARGETS = train/train.model
+
+### DEV ###
+
+DEV_DJVU_LIST = $(shell cat dev-0/in.tsv)
+DEV_UNPACK_TARGETS= $(patsubst %.djvu,\
+								  dev-0/%/flags/UNPACK.DONE,\
+								  $(DEV_DJVU_LIST))
+DEV_GENERATE_TARGETS = $(patsubst %.djvu,\
+								  dev-0/%/flags/GENERATE.DONE,\
+								  $(DEV_DJVU_LIST))
+DEV_ANALYZE_TARGETS = $(patsubst %.djvu,\
+					  			  dev-0/%/flags/ANALYZE_TEST.DONE,\
+								  $(DEV_DJVU_LIST))
+DEV_PREDICT_TARGETS = $(patsubst %.djvu,\
+					  			  dev-0/%/flags/PREDICT.DONE,\
+								  $(DEV_DJVU_LIST))
+DEV_EXTRACT_TARGETS = $(patsubst %.djvu,\
+					  			  dev-0/%/flags/EXTRACT.DONE,\
+								  $(DEV_DJVU_LIST))
+DEV_MERGE_TARGETS = dev-0/test.vw
+DEV_VW_TARGETS = dev-0/train.predict
 
 ### TEST ###
 
@@ -110,6 +131,16 @@ test-clean:
 	rm -rf test-A/*.out.tsv \
 		   test-A/out.tsv
 
+dev-purge:
+	rm -rf dev-0/*/ \
+		   dev-0/*.vw \
+		   dev-0/*.predict \
+		   dev-0/*.out.tsv \
+		   dev-0/out.tsv
+dev-clean:
+	rm -rf dev-0/*.out.tsv \
+		   dev-0/out.tsv
+
 clean-unpack:
 	rm -rf $(TRAIN_UNPACK_TARGETS)
 	rm -f train/*.txt
@@ -127,8 +158,8 @@ purge: train-purge test-purge
 
 clean: train-clean test-clean
 
-split-data:
-	./scripts/split_data.sh ${INPUT_DIR} TRAIN TEST
+#split-data:
+	#./scripts/split_data.sh ${INPUT_DIR} TRAIN TEST
 
 
 ####################################### COMMON RULES ###############################################
@@ -153,11 +184,17 @@ split-data:
 
 ## TRAIN BPE ###
 
-BPE/bpe.model: $(TRAIN_UNPACK_TARGETS)
+
+BPE/corpora.txt: $(TRAIN_UNPACK_TARGETS)
 	mkdir -p $(@D)
 	cat ./train/*.txt | iconv -f utf-8 -t utf-8 -c \
 					  | perl -nle 'print lc' \
-					  | ./scripts/subword-nmt/learn_bpe.py -v \
+					  > ./BPE/corpora.txt
+
+
+BPE/bpe.model: BPE/corpora.txt
+	mkdir -p $(@D)
+	cat $< | ./scripts/subword-nmt/learn_bpe.py -v \
 					  > $@
 
 BPE/bpe.bin: BPE/bpe.model
@@ -196,7 +233,7 @@ LM/LM.BINARY.DONE: LM/LM.ARPA.DONE
 
 ### ANALYZE TEST ###
 
-%/flags/ANALYZE_TEST.DONE: %/flags/GENERATE.DONE
+%/flags/ANALYZE_TEST.DONE: %/flags/GENERATE.DONE LM/LM.BINARY.DONE BPE/bpe.bin
 	./scripts/analyze_test.sh $*.djvu
 	touch $@
 
@@ -278,9 +315,60 @@ train-vw: train/train.model
 	@echo "CREATED VOWPAL WABBIT MODEL"
 
 train/train.model: train/train.in
-	$(VOWPAL_WABBIT_DIR)/vw -d $< -c --passes 10 -f $@
+	$(VOWPAL_WABBIT_DIR)/vw -d $< -c -k --passes 300 --ngram 7 -b 24 -f $@
 
 ####################################################################################################
+
+######################################### DEV  #################################################
+
+
+dev: dev-merge
+		  
+### 1. UNPACK ###
+
+dev-unpack: $(DEV_UNPACK_TARGETS)
+	@echo "FINISHED UNPACKING ALL NEWSPAPERS"
+
+#################
+
+### 2. GENERATE RECTANGLES ###
+
+dev-generate: $(DEV_GENERATE_TARGETS)
+	@echo "FINISHED GENERATING RECTANGLES FOR ALL NEWSPAPERS"
+
+##############################
+
+### 3. ANALYZE ###
+
+dev-analyze: $(DEV_ANALYZE_TARGETS)
+	@echo "FINISHED ANALYZING ALL NEWSPAPERS"
+
+##################
+
+### 4. PREDICT  ###
+
+dev-predict: $(DEV_PREDICT_TARGETS)
+	@echo "FINISHED PREDICTING OBITUARIES FOR ALL NEWSPAPERS"
+
+
+###################
+
+### 5. EXTRACT ###
+
+dev-extract: $(DEV_EXTRACT_TARGETS)
+	@echo "FINISHED EXTRACTING OBITUARIES FOR ALL NEWSPAPERS"
+
+##################
+
+### 6. MERGE ###
+
+dev-merge: dev-0/out.tsv
+	@echo "FINISHED DEVING"
+
+dev-0/out.tsv: $(DEV_EXTRACT_TARGETS)
+	cat dev-0/*.out.tsv | python3 ./scripts/merge_necro.py -i dev-0/in.tsv > dev-0/out.tsv
+
+##################
 
 
 ######################################### TESTING  #################################################
@@ -336,8 +424,12 @@ test-A/out.tsv: $(TEST_EXTRACT_TARGETS)
 
 ### 1. CUT-NECRO
 
-cut-necro: test-A/in.tsv test-A/out.tsv
+test-cut: test-A/in.tsv test-A/out.tsv
 	paste -d" " test-A/in.tsv test-A/out.tsv > test-A/result.tsv
 	python ./scripts/cut_necro.py -res test-A/result.tsv
+
+dev-cut: dev-0/in.tsv dev-0/out.tsv
+	paste -d" " dev-0/in.tsv dev-0/out.tsv > dev-0/result.tsv
+	python ./scripts/cut_necro.py -res dev-0/result.tsv
 
 ####################################################################################################

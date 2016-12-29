@@ -24,9 +24,18 @@ class RectangleGenerator():
         self.original = cv2.imread(f_path)
         self.thickened = self.preprocess_image()
         self.rectangles = self.find_rectangles(l, u, verbose)
-        self.error = self.thickened.shape[1] * 3 / 100
         self.filtered_rect = self.remove_duplicates()
+        sys.stdout.write("FILTERED\n")
         self.print_rectangles()
+        sys.stderr.write("UNFILTERED\n")
+        for x1, y1, x2, y2 in self.rectangles:
+            rectangle = {"X1": str(x1),
+                         "Y1": str(y1),
+                         "X2": str(x2),
+                         "Y2": str(y2)}
+            for param in ["X1", "Y1", "X2", "Y2"]:
+                sys.stderr.write(param + ":" + str(rectangle[param]) + " ")
+            sys.stderr.write("\n")
 
     def load_coordinates(self):
         """
@@ -67,7 +76,6 @@ class RectangleGenerator():
         """
 
         image = cv2.cvtColor(self.original, cv2.COLOR_BGR2GRAY)
-        #cv2.imwrite("grayscale.tiff", image)
 
         # Thresholding
         otsu_value, thresholded = cv2.threshold(
@@ -76,15 +84,9 @@ class RectangleGenerator():
         # Cover words
         self.remove_words(thresholded)
 
-        # Denoise
-        # denoised = cv2.morphologyEx(thresholded, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3)))
-        # cv2.imwrite("denoised.tiff", denoised)
-
         # Thicken skeleton
         thickened = cv2.dilate(thresholded, cv2.getStructuringElement(
             cv2.MORPH_RECT, (7, 7)), iterations=1)
-
-        # cv2.imwrite("thickened.tiff", thickened)
 
         return thickened
 
@@ -101,27 +103,29 @@ class RectangleGenerator():
         x1_b, y1_b, x2_b, y2_b = b
 
         x1_a_b = float(x1_a) / x1_b
+        x1_b_a = float(x1_b) / x1_a
         y1_a_b = float(y1_a) / y1_b
+        y1_b_a = float(y1_b) / y1_a
         x2_a_b = float(x2_a) / x2_b
+        x2_b_a = float(x2_b) / x2_a
         y2_a_b = float(y2_a) / y2_b
+        y2_b_a = float(y2_b) / y2_a
 
         gt_1 = [y1_a_b, x2_a_b]
         lt_1 = [x1_a_b, y2_a_b]
 
-        errors = [
-                abs(x1_a - x1_b),
-                abs(y1_a - y1_b),
-                abs(x2_a - x2_b),
-                abs(y2_a - y2_b)
-                ]
+        errors = [min(x1_a_b, x1_b_a),
+                  min(y1_a_b, y1_b_a),
+                  min(x2_a_b, x2_b_a),
+                  min(y2_a_b, y2_b_a)]
 
         # sys.stderr.write(str(a) + " | " + str(b))
         # sys.stderr.write("\n")
         # for e in errors:
-        # sys.stderr.write(str(e) + " ")
+            # sys.stderr.write(str(e) + " ")
         # sys.stderr.write("\n")
 
-        if sum([e <= self.error for e in errors]) >= 4:
+        if sum(e >= 0.8 for e in errors) >= 2:
             gt = sum(g >= 1 for g in gt_1)
             lt = sum(l < 1 for l in lt_1)
             if gt + lt >= 2:
@@ -143,6 +147,7 @@ class RectangleGenerator():
                 continue
             found = False
             for b in self.rectangles:
+                print(a, b)
                 if a == b:
                     continue
                 is_close, bigger = self.check_if_near(a, b)
@@ -150,8 +155,6 @@ class RectangleGenerator():
                     result.append(bigger)
                     duplicates.add(b)
                     found = True
-                # if is_close and found:
-                    # duplicates.add(b)
             if not found:
                 result.append(a)
         return result
@@ -182,7 +185,7 @@ class RectangleGenerator():
 
         rectangles = []
         contours, hierarchy = cv2.findContours(
-            self.thickened.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            self.thickened.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_TC89_KCOS)
         # unimportant_rect = set()
 
         for i, cnt in enumerate(contours):
@@ -199,9 +202,9 @@ class RectangleGenerator():
 
         if verbose:
             rect_image = self.original.copy()
-            rect_output = args.f.replace(".tiff", ".rect_new.tiff")
-            skel_output = args.f.replace(".tiff", "skel_new.tiff")
-            rect_dir = args.f.replace(".tiff", "_new")
+            rect_output = args.f.replace(".tiff", ".rect.tiff")
+            skel_output = args.f.replace(".tiff", "skel.tiff")
+            rect_dir = args.f.replace(".tiff", "")
             if not os.path.exists(rect_dir):
                 os.makedirs(rect_dir)
 

@@ -89,9 +89,9 @@ class Classifier:
                 rect_error[rec] = self.check_error(necro, rec)
             try:
                 nearest = min(rect_error, key=rect_error.get)
-                print >> sys.stderr, rect_error[nearest]
-                print >> sys.stderr, float(rect_error[nearest]) / 4
-                print >> sys.stderr, str(x1) + " " + str(y1) + " " + str(x2) + " " + str(y2)
+                # print >> sys.stderr, rect_error[nearest]
+                # print >> sys.stderr, float(rect_error[nearest]) / 4
+                # print >> sys.stderr, str(x1) + " " + str(y1) + " " + str(x2) + " " + str(y2)
                 if float(rect_error[nearest]) / 4 < float(error):
                     # print >> sys.stderr, "FOUND IT"
                     self.rectangles[nearest] = 1

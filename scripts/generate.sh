@@ -21,7 +21,7 @@ do
 
     #Extract potential necro rectangles
     python scripts/rectangle.py -f $DIR/page_$i.tiff \
-        -l 200 -u 2500 \
+       -l 200 -u 2500 \
        < $DIR/page_$i.xml_coord \
        > $DIR/page_$i.rect
 

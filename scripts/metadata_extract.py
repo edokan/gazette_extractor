@@ -19,7 +19,7 @@ def parse_args():
 
 def get_gazette_title():
     splitted = word_tokenize(metadata["title"], language="polish")
-    tokens = [w for w in splitted if w.isalnum()]
+    tokens = [w.lower() for w in splitted if w.isalnum()]
 
     for token in tokens:
         features["INTITLE+" + token] = ""

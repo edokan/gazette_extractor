@@ -75,13 +75,13 @@ class GraphicFeaturesExtractor():
             horizontal_less, mph=None, mpd=10, threshold=0, edge='falling', kpsh=False, valley=True, show=False, ax=None)
         for i in range(len(horizontal_valleys)):
             cv2.line(horizontal_hist, (horizontal_valleys[i] * n, horizontal[horizontal_valleys[
-                     i] * n]), (horizontal_valleys[i] * n, horizontal[horizontal_valleys[i] * n]), (255, 255, 0), 10)
+                     i] * n]), (horizontal_valleys[i] * n, horizontal[horizontal_valleys[i] * n]), (255, 255, 0), 20)
 
         vertical_valleys = detect_peaks(vertical_less, mph=None, mpd=10, threshold=0,
                                         edge='falling', kpsh=False, valley=True, show=False, ax=None)
         for i in range(len(vertical_valleys)):
             cv2.line(vertical_hist, (vertical[vertical_valleys[i] * n], vertical_valleys[i] * n),
-                     (vertical[vertical_valleys[i] * n], vertical_valleys[i] * n), (255, 255, 0), 10)
+                     (vertical[vertical_valleys[i] * n], vertical_valleys[i] * n), (255, 255, 0), 20)
 
         # PEAKS #############################################################
 
@@ -89,13 +89,13 @@ class GraphicFeaturesExtractor():
                                         edge='falling', kpsh=False, valley=False, show=False, ax=None)
         for i in range(len(horizontal_peaks)):
             cv2.line(horizontal_hist, (horizontal_peaks[i] * n, horizontal[horizontal_peaks[
-                     i] * n]), (horizontal_peaks[i] * n, horizontal[horizontal_peaks[i] * n]), (0, 255, 0), 10)
+                     i] * n]), (horizontal_peaks[i] * n, horizontal[horizontal_peaks[i] * n]), (0, 255, 0), 20)
 
         vertical_peaks = detect_peaks(vertical_less, mph=None, mpd=10, threshold=0,
                                       edge='falling', kpsh=False, valley=False, show=False, ax=None)
         for i in range(len(vertical_peaks)):
             cv2.line(vertical_hist, (vertical[vertical_peaks[i] * n], vertical_peaks[i] * n),
-                     (vertical[vertical_peaks[i] * n], vertical_peaks[i] * n), (0, 255, 0), 10)
+                     (vertical[vertical_peaks[i] * n], vertical_peaks[i] * n), (0, 255, 0), 20)
 
         # SHOW HISTOGRAMS IN VERBOSE MODE ##################################
 
