@@ -101,7 +101,7 @@ def get_trigrams(words_list):
     if len(sentence) >= 3:
         index = 0
         while index < len(sentence) - 2:
-            trigrams.append("TRIGRAM+" + str(sentence[index]) + str(sentence[index + 1]) + str(sentence[index + 2]))
+            trigrams.append("TRIGRAM+" + str(sentence[index]).lower() + str(sentence[index + 1]).lower() + str(sentence[index + 2]).lower())
             index += 1
             
     return " ".join(trigrams)
@@ -118,7 +118,7 @@ def get_bigrams(words_list):
     if len(sentence) >= 2:
         index = 0
         while index < len(sentence) - 1:
-            bigrams.append("BIGRAM+" + str(sentence[index]) + str(sentence[index + 1]))
+            bigrams.append("BIGRAM+" + str(sentence[index]).lower() + str(sentence[index + 1]).lower())
             index += 1
     return " ".join(bigrams)
 
@@ -130,7 +130,7 @@ def get_unigrams(words_list):
         words_list (list) : list of words from rectangle
     """
     sentence = remove_special_characters(words_list)
-    unigrams = ["CHAR+" + letter for letter in sentence]
+    unigrams = ["CHAR+" + letter.lower() for letter in sentence]
     return " ".join(unigrams)
 
 if __name__ == "__main__":

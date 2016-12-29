@@ -316,7 +316,7 @@ train-vw: train/train.model
 	@echo "CREATED VOWPAL WABBIT MODEL"
 
 train/train.model: train/train.in
-	$(VOWPAL_WABBIT_DIR)/vw -d $< -c -k --passes 300 --ngram 7 -b 24 -f $@
+	$(VOWPAL_WABBIT_DIR)/vw -d $< -c -k --passes 10 --ngram 4 -b 24 -f $@
 
 ####################################################################################################
 
