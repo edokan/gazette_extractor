@@ -10,7 +10,7 @@ import argparse
 
 def read_necrologue_data(result):
     """
-    Reads from merged test-A/in.tsv test-A/out.tsv necrologue data such as:
+    Reads from merged test_dir/in.tsv test_dir/out.tsv necrologue data such as:
     -Newspaper title
     -Coordinates of necrologue
     -Page with necrologue
@@ -26,20 +26,21 @@ def read_necrologue_data(result):
                 necrologue[coordinates] = [title, page]
     return necrologue
 
-def cut_necrologies(necrologue, obituary_dir, show):
+def cut_necrologies(necrologue, obituary_dir, test_dir, show):
     """                                                                                                                                           
     Cut (guessed) necrology from page.
                                                                                                                                                       
     Args:                                                                                                                                         
         necrologue (dict): Dictionary with coordinates of potential necrology.
         obituary_dir (str): Directory where necrologies are kept.
+        test_dir (str): Directory of tests
         show (bool): Option to set if we want to see necrologies during script running.
     """
     for key, val in necrologue.items():
         gazette_title = val[0].replace(".djvu","")
         page_with_necro = val[1]
         coordinates = key.split(",")
-        path_to_page = "test-A/" + gazette_title + "/page_" + page_with_necro + ".tiff"
+        path_to_page = test_dir + "/" + gazette_title + "/page_" + page_with_necro + ".tiff"
 
         page = cv2.imread(path_to_page)
         necro = page[int(coordinates[1]):int(coordinates[3]), int(coordinates[0]):int(coordinates[2])]
@@ -53,15 +54,16 @@ def cut_necrologies(necrologue, obituary_dir, show):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Extractor of guessed necrologies")
-    parser.add_argument('-res', help="filename where necrologies data are kept -> test-A/result.tsv.")
+    parser.add_argument('-directory', help="directory where test results are kept test-A or dev-0")
+    parser.add_argument('-res', help="filename where necrologies data are kept -> directory_name/result.tsv.")
     parser.add_argument('-show', help="set flag as true if you want to see necrologies during running the script", default=False) 
     args = parser.parse_args()
 
     necrologue = dict()    
-    obituary_folder = "test-A/obituaries/"
+    obituary_folder = args.directory + "/obituaries/"
 
     if not os.path.isdir(obituary_folder):
         os.makedirs(obituary_folder)
 
-    necrologue = read_necrologue_data(args.res)
-    cut_necrologies(necrologue, obituary_folder, args.show)
+    necrologue = read_necrologue_data(args.directory + "/" + args.res)
+    cut_necrologies(necrologue, obituary_folder, args.directory, args.show)

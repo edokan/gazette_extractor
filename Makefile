@@ -427,10 +427,10 @@ test-A/out.tsv: $(TEST_EXTRACT_TARGETS)
 
 test-cut: test-A/in.tsv test-A/out.tsv
 	paste -d" " test-A/in.tsv test-A/out.tsv > test-A/result.tsv
-	python ./scripts/cut_necro.py -res test-A/result.tsv
+	python ./scripts/cut_necro.py -directory test-A -res result.tsv
 
 dev-cut: dev-0/in.tsv dev-0/out.tsv
 	paste -d" " dev-0/in.tsv dev-0/out.tsv > dev-0/result.tsv
-	python ./scripts/cut_necro.py -res dev-0/result.tsv
+	python ./scripts/cut_necro.py -directory dev-0 -res result.tsv
 
 ####################################################################################################
