@@ -10,6 +10,8 @@ mkdir -p ${DIR}/flags
 
 echo "Unpacking" ${DDJVU_FILE} - PAGES ${PAGES}
 
+echo ${PAGES} > ${DIR}/pages.txt
+
 # Extracting metadata.
 djvused -u ${DDJVU_FILE} -e 'print-meta' > ${DIR}/metadata.tsv
 

@@ -3,8 +3,8 @@
 DDJVU_FILE=$1
 FILE_DIR=$(dirname "${DDJVU_FILE}")
 DDJVU_NAME=$(basename "${DDJVU_FILE}" .djvu)
-PAGES=$(djvused -e n "${DDJVU_FILE}")
 DIR=${FILE_DIR}/${DDJVU_NAME}
+PAGES=$(cat ${DIR}/pages.txt)
 
 #Analyze metadata.
 python3 scripts/metadata_extract.py < $DIR/metadata.tsv > $DIR/metadata.vw
@@ -36,7 +36,7 @@ do
 
 done
 #Merge all pages features into one file.
-cat `ls -v $DIR/page_*.features.vw` > ${DIR}/${DDJVU_NAME}.without_lm.vw
+cat `ls -v $DIR/page_*.features.vw` > ${FILE_DIR}/${DDJVU_NAME}.vw
 
 #Create lm and add it to the rest of features.
 python3 scripts/lm_feature.py -vw ${DIR}/${DDJVU_NAME}.without_lm.vw --c BPE/bpe.bin > ${DIR}/${DDJVU_NAME}.lm_feature.vw

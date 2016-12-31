@@ -55,6 +55,9 @@ TRAIN_CLASSIFY_TARGETS = $(patsubst %.djvu,\
 TRAIN_ANALYZE_TARGETS = $(patsubst %.djvu,\
 					  			 train/%/flags/ANALYZE_TRAIN.DONE,\
 								 $(TRAIN_DJVU_LIST))
+TRAIN_MERGE_SOURCE = $(patsubst %.djvu,\
+					  			 train/%.vw,\
+								 $(TRAIN_DJVU_LIST))
 TRAIN_MERGE_TARGETS = train/train.vw
 TRAIN_VW_TARGETS = train/train.model
 
@@ -142,18 +145,50 @@ dev-clean:
 	rm -rf dev-0/*.out.tsv \
 		   dev-0/out.tsv
 
-clean-unpack:
+train-clean-unpack:
 	rm -rf $(TRAIN_UNPACK_TARGETS)
 	rm -f train/*.txt
 
-clean-generate:
+train-clean-generate:
 	rm -rf $(TRAIN_GENERATE_TARGETS)
 
-clean-classify:
+train-clean-classify:
 	rm -rf $(TRAIN_CLASSIFY_TARGETS)
 
-clean-analyze:
+train-clean-analyze:
 	rm -rf $(TRAIN_ANALYZE_TARGETS)
+
+dev-clean-unpack:
+	rm -rf $(DEV_UNPACK_TARGETS)
+	rm -f dev/*.txt
+
+dev-clean-generate:
+	rm -rf $(DEV_GENERATE_TARGETS)
+
+dev-clean-predict:
+	rm -rf $(DEV_PREDICT_TARGETS)
+
+dev-clean-extract:
+	rm -rf $(DEV_EXTRACT_TARGETS)
+
+dev-clean-analyze:
+	rm -rf $(DEV_ANALYZE_TARGETS)
+
+test-clean-unpack:
+	rm -rf $(TEST_UNPACK_TARGETS)
+	rm -f test/*.txt
+
+test-clean-generate:
+	rm -rf $(TEST_GENERATE_TARGETS)
+
+test-clean-predict:
+	rm -rf $(TEST_PREDICT_TARGETS)
+
+test-clean-extract:
+	rm -rf $(TEST_EXTRACT_TARGETS)
+
+test-clean-analyze:
+	rm -rf $(TEST_ANALYZE_TARGETS)
 
 purge: train-purge test-purge
 
@@ -305,8 +340,8 @@ train-analyze: $(TRAIN_ANALYZE_TARGETS)
 train-merge: train/train.in
 	@echo "CREATED VOWPAL WABBIT TRAINING FILE"
 
-train/train.in: $(TRAIN_ANALYZE_TARGETS)
-	cat train/*.vw > train/train.in
+train/train.in: $(TRAIN_ANALYZE_TARGETS) train/in.tsv
+	cat $(TRAIN_MERGE_SOURCE) > $@
 
 ###############
 
