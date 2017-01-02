@@ -13,7 +13,7 @@ for i in $(seq 1 $PAGES)
 do
 
    #Extract graphic features
-   python scripts/graphic_features_extractor.py -f $DIR/page_$i.tiff -v \
+   python scripts/graphic_features_extractor.py -f $DIR/page_$i.tiff \
        < $DIR/page_$i.rect \
        > $DIR/page_$i.graphic_features.vw
 

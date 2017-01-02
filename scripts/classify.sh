@@ -3,9 +3,9 @@
 DDJVU_FILE=$1
 FILE_DIR=$(dirname "${DDJVU_FILE}")
 DDJVU_NAME=$(basename "${DDJVU_FILE}" .djvu)
-PAGES=$(djvused -e n "${DDJVU_FILE}")
 NECRO_FILE=${FILE_DIR}/${DDJVU_NAME}.necro
 DIR=${FILE_DIR}/${DDJVU_NAME}
+PAGES=$(cat "${DIR}/pages.txt")
 
 echo "Classyfing rectangles for" ${DDJVU_FILE}
 

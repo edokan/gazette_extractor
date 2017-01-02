@@ -202,8 +202,8 @@ clean: train-clean test-clean
 
 ### UNPACK ###
 
-%/flags/UNPACK.DONE: %.djvu
-	./scripts/unpack.sh $<
+%/flags/UNPACK.DONE:
+	./scripts/unpack.sh $*.djvu
 	touch $@
 
 ### GENERATE ###
@@ -225,12 +225,13 @@ BPE/corpora.txt: $(TRAIN_UNPACK_TARGETS)
 	mkdir -p $(@D)
 	cat ./train/*.txt | iconv -f utf-8 -t utf-8 -c \
 					  | perl -nle 'print lc' \
-					  > ./BPE/corpora.txt
+					  | pigz -c \
+					  > ./BPE/corpora.txt.gz
 
 
-BPE/bpe.model: BPE/corpora.txt
+BPE/bpe.model: BPE/corpora.txt.gz
 	mkdir -p $(@D)
-	cat $< | ./scripts/subword-nmt/learn_bpe.py -v \
+	zcat $< | ./scripts/subword-nmt/learn_bpe.py -v -s 1000 \
 					  > $@
 
 BPE/bpe.bin: BPE/bpe.model
