@@ -3,8 +3,8 @@
 DDJVU_FILE=$1
 FILE_DIR=$(dirname "${DDJVU_FILE}")
 DDJVU_NAME=$(basename "${DDJVU_FILE}" .djvu)
+PAGES=$(djvused -e n "${DDJVU_FILE}")
 DIR=${FILE_DIR}/${DDJVU_NAME}
-PAGES=$(cat ${DIR}/pages.txt)
 
 #Analyze metadata.
 python3 scripts/metadata_extract.py < $DIR/metadata.tsv > $DIR/metadata.vw
@@ -18,9 +18,7 @@ do
        > $DIR/page_$i.graphic_features.vw
 
    #Extract text features
-   python3 scripts/text_features_extractor.py -pc $DIR/page_$i.rect \
-       < $DIR/page_$i.xml_cleaned \
-       > $DIR/page_$i.text_features.vw
+   python3 scripts/text_features_extractor.py -pc $DIR/page_$i.rect -xc $DIR/page_$i.xml_coord > $DIR/page_$i.text_features.vw
 
    #Merge all page's features into one file.
 

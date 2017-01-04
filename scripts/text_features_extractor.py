@@ -133,29 +133,26 @@ def get_unigrams(words_list):
     unigrams = ["CHAR+" + letter.lower() for letter in sentence]
     return " ".join(unigrams)
 
+
 if __name__ == "__main__":
     coords_input = []
 
     parser = argparse.ArgumentParser(description="Extractor of text features included in .xml file od djvu format")
     parser.add_argument('-pc', help="filename where coordinates are kept.")
+    parser.add_argument('-xc', help="xml_coord")
     args = parser.parse_args()
-
-    try:
-        tree_xml = ""
-        for line in sys.stdin:
-            tree_xml += line
-        root = ET.fromstring(tree_xml)
-    except:
-    	exit(0)
 
     with open(args.pc) as coords:
         for coord in coords.readlines(): 
             coords_input.append(coord.replace(":","").replace("X1","").replace("X2","").replace("X3","").replace("X4","")\
                                 .replace("Y1","").replace("Y2","").replace("Y3","").replace("Y4","").rstrip().split(" "))
 
+    with open(args.xc) as xml_coord_file:
+        xml_file = xml_coord_file.readlines()
+
     for coord_input in coords_input :
         text_feature = OrderedDict()
-        words_list = cut_xml(coord_input[0], coord_input[1], coord_input[2], coord_input[3], root)
+        words_list = cut_xml(coord_input[0], coord_input[1], coord_input[2], coord_input[3], xml_file)
         #NUMERIC FEATURES
         text_feature["CHARS_AMOUNT:"] = get_chars_amount(words_list)
         text_feature["WORDS_AMOUNT:"] = get_words_amount(words_list)
@@ -175,3 +172,4 @@ if __name__ == "__main__":
                 sys.stdout.write(feature + str(text_feature[feature]) + " ")
             sys.stdout.flush()
         sys.stdout.write("\n")
+

@@ -10,9 +10,11 @@ import sys
 import xml.etree.ElementTree as ET
 import string
 from common_text_features_functions import get_punct_amount
+from collections import OrderedDict
 
 para_begin_end = []
 output_words_lines = []
+node_list = []
 
 def get_alpha(line):
     """
@@ -33,10 +35,24 @@ def check_paragraph(para_xml):
     Args:
         para_xml (str) : xml of paragraph
     """
+            
     root = ET.fromstring(para_xml)
     text = ""
-    for word in root.iter("WORD"):
-        if word.text != None: text += word.text
+    chars = ""
+    node_list = [ele.tag for ele in root.getiterator()]
+
+    if "WORD" in node_list:
+        for word in root.iter("WORD"):
+            if word.text != None: text += word.text
+
+    if "CHARACTER" in node_list:
+        for word in root.iter("CHARACTER"):
+            if word.text != None: text += word.text
+
+    else:
+        for word in root.iter("LINE"):
+            if word.text != None: text += word.text
+
     if get_alpha(text) > get_punct_amount(text): return 1
     else : return 0
     
@@ -61,7 +77,8 @@ def create_words_lines_output(coordinates_words):
     for key, value in coordinates_words.items():
         keys = []
         for k in key: keys.append(k)
-        output_words_lines.append("WORD\t" + ' '.join(keys) + ' ' + value)
+        for word in value.split(" "):
+            output_words_lines.append("WORD\t" + ' '.join(keys) + ' ' + word)
 
 def get_words_xml(line_xml):
     """
@@ -71,16 +88,42 @@ def get_words_xml(line_xml):
         line_xml (str) : xml of "LINE"
     """
     root = ET.fromstring(line_xml)
-    coordinates_word = {}
-    for word in root.iter("WORD"):
-        if not word: 
-            coordinates = list(word.attrib.values())[0].split(',')
-            x1 = coordinates[0]
-            y1 = coordinates[1]
-            x2 = coordinates[2]
-            y2 = coordinates[3]
-            if (word.text != None) :
-                coordinates_word[x1,y1,x2,y2] = word.text.lstrip().rstrip()
+    coordinates_word = OrderedDict()
+    node_list =  [ele.tag for ele in root.getiterator()]
+
+    if "WORD" in node_list:
+        for word in root.iter("WORD"):
+            if not word: 
+                coordinates = list(word.attrib.values())[0].split(',')
+                x1 = coordinates[0]
+                y1 = coordinates[1]
+                x2 = coordinates[2]
+                y2 = coordinates[3]
+                if (word.text != None) :
+                    coordinates_word[x1,y1,x2,y2] = word.text.lstrip().rstrip()
+    
+    if "CHARACTER" in node_list:
+        for word in root.iter("CHARACTER"):
+            if not word:
+                coordinates = list(word.attrib.values())[0].split(',')
+                x1 = coordinates[0]
+                y1 = coordinates[1]
+                x2 = coordinates[2]
+                y2 = coordinates[3]
+                if (word.text != None) :
+                    coordinates_word[x1,y1,x2,y2] = word.text.lstrip().rstrip()
+
+    else:
+        for word in root.iter("LINE"):
+            if not word:
+                coordinates = list(word.attrib.values())[0].split(',')
+                x1 = coordinates[0]
+                y1 = coordinates[1]
+                x2 = coordinates[2]
+                y2 = coordinates[3]
+                if (word.text != None) :
+                    coordinates_word[x1,y1,x2,y2] = word.text.strip()
+        
     if coordinates_word : create_words_lines_output(coordinates_word)
 
 def get_lines_xml(para_xml):
@@ -101,7 +144,7 @@ def get_paragraphs_xml(root):
     """
     para_xml = ""
     for line in root.iter("PARAGRAPH"):
-        para_xml = ET.tostring(line)        
+        para_xml = ET.tostring(line)
         if check_paragraph(para_xml):
             get_lines_xml(para_xml)
             create_output()

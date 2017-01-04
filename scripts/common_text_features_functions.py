@@ -7,7 +7,7 @@
 import xml.etree.ElementTree as ET
 import string
 
-def cut_xml(_x1, _y1, _x2, _y2, root):
+def cut_xml(_x1, _y1, _x2, _y2, xml_file):
     """
     Returns text, contained in specified area (recognized rectangle in newspaper), from xml file.
 
@@ -17,18 +17,20 @@ def cut_xml(_x1, _y1, _x2, _y2, root):
         _x2 (int) : Lower right-sided x coordinate
         _y2 (int) : Lower right-sided y coordinate
     """
-
-    words_list = []
-    for word in root.iter('WORD'):
-        if word.text is not None:
-            coordinates = list(word.attrib.values())[0].split(',')
-            x1 = coordinates[0]
-            y1 = coordinates[1]
-            x2 = coordinates[2]
-            y2 = coordinates[3]
-            if (int(x1) > int(_x1) and int(x2) < int(_x2) and int(y1) > int(_y1) and int(y2) < int(_y2) and word.text is not None):
-                words_list.append(word.text.strip())
-    return words_list
+    words = []
+    for line in xml_file:
+        type_of_line = line.split("\t")[0]
+        if type_of_line == "WORD":
+            line_data =line.split("\t")[1].split(" ")
+            if len(line_data) >= 5:
+                x1 = line_data[0]
+                y1 = line_data[1]
+                x2 = line_data[2]
+                y2 = line_data[3]
+                word = line_data[4]
+                if (int(x1) > int(_x1) and int(x2) < int(_x2) and int(y1) > int(_y1) and int(y2) < int(_y2)):
+                    words.append(word.strip())
+    return(words)
 
 def get_punct_amount(words_list):
     """

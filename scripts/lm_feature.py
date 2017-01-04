@@ -39,18 +39,12 @@ if __name__ == "__main__":
             y1 = re.search(r"Y1:\d{1,4}", rectangle).group(0).replace("Y1:","")
             y2 = re.search(r"Y2:\d{1,4}", rectangle).group(0).replace("Y2:","")
 
-            try:
-                xml_cleaned = gazette_title + "/page_" + page + ".xml_cleaned"
-                tree_xml = ""
-                with open(xml_cleaned) as xml:
-                    for line in xml:
-                        tree_xml += line
-                    root = ET.fromstring(tree_xml)
-            except:
-                exit(0)
+            xml_coord = gazette_title + "/page_" + page + ".xml_coord"
 
+            with open(xml_coord) as xml_coord_file:
+                xml_coords = xml_coord_file.readlines()
             #LM for rectangle -> corpus of necrologue
-            rectangle_text = cut_xml(x1, y1, x2, y2, root)
+            rectangle_text = cut_xml(x1, y1, x2, y2, xml_coords)
             rectangle_text_normalized = " ".join(rectangle_text).replace(""," ")[1: -1].lower()
             necro_lm_score = necrologues_lm.score(rectangle_text_normalized)
             sys.stdout.write("LM_RECT_SCORE:" + str(necro_lm_score) + " ")
