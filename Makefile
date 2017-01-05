@@ -20,6 +20,8 @@ SHELL = /bin/bash
 KENLM_BIN = ~/kenlm/build/bin
 VOWPAL_WABBIT_DIR = ~/vowpal_wabbit/vowpalwabbit
 
+IMPORTANCE = 1000
+
 ### INSTALL ###
 
 install-doc:
@@ -225,13 +227,14 @@ BPE/corpora.txt: $(TRAIN_UNPACK_TARGETS)
 	mkdir -p $(@D)
 	cat ./train/*.txt | iconv -f utf-8 -t utf-8 -c \
 					  | perl -nle 'print lc' \
-					  | pigz -c \
+					  | head -3000000 |
+					 	pigz -c \
 					  > ./BPE/corpora.txt.gz
 
 
 BPE/bpe.model: BPE/corpora.txt.gz
 	mkdir -p $(@D)
-	zcat $< | ./scripts/subword-nmt/learn_bpe.py -v -s 1000 \
+	zcat $< | ./scripts/subword-nmt/learn_bpe.py -v \
 					  > $@
 
 BPE/bpe.bin: BPE/bpe.model
@@ -342,7 +345,7 @@ train-merge: train/train.in
 	@echo "CREATED VOWPAL WABBIT TRAINING FILE"
 
 train/train.in: $(TRAIN_ANALYZE_TARGETS) train/in.tsv
-	cat $(TRAIN_MERGE_SOURCE) > $@
+	cat $(TRAIN_MERGE_SOURCE) | sed 's,^1,1 $(IMPORTANCE),g' | shuf > $@
 
 ###############
 

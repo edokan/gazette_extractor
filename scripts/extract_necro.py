@@ -1,18 +1,17 @@
-import sys
 import argparse
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description = 
-            """
+    parser = argparse.ArgumentParser(description="""
             Extracts found obituaries using VW input file and VW predictions.
             Parses it into Gonito format.
             """
-            )
-    parser.add_argument("-i", help = "VW input file", required = True)
-    parser.add_argument("-p", help = "VW predictions", required = True)
+                                     )
+    parser.add_argument("-i", help="VW input file", required=True)
+    parser.add_argument("-p", help="VW predictions", required=True)
     args = parser.parse_args()
 
 necrologies = []
+
 
 def extract_necro():
     with open(args.i) as input_file, open(args.p) as predict_file:

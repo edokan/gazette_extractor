@@ -65,7 +65,7 @@ class Classifier:
         error = 0
         error += abs(n_x1 - r_x1)
         error += abs(n_y1 - r_y1)
-        error += abs(n_x2 - r_y2)
+        error += abs(n_x2 - r_x2)
         error += abs(n_y2 - r_y2)
         return error
 
@@ -89,6 +89,7 @@ class Classifier:
                 rect_error[rec] = self.check_error(necro, rec)
             try:
                 nearest = min(rect_error, key=rect_error.get)
+                # print >> sys.stderr, "NEAREST RECT: " + str(nearest)
                 # print >> sys.stderr, rect_error[nearest]
                 # print >> sys.stderr, float(rect_error[nearest]) / 4
                 # print >> sys.stderr, str(x1) + " " + str(y1) + " " + str(x2) + " " + str(y2)
