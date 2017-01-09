@@ -8,8 +8,6 @@ Gazette Reaper
 
 This is tutorial and documentation for Gazette Reaper - engineering project developed at Adam Mickiewicz University.
 
-There will be more info here in the future.
-
 Contents
 ---------
 
