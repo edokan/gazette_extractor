@@ -1,3 +1,5 @@
+Manual and tutorial : http://gazette-extractor.readthedocs.io/
+
 ENGINEER PROJECT - GAZETTE EXTRACTOR
 
 Authors:
