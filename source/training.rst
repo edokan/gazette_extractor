@@ -1,14 +1,13 @@
-.. Gazette Reaper documentation master file, created by
+.. Gazette Extractor documentation master file, created by
    sphinx-quickstart on Thu Oct  6 12:07:04 2016.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Gazette Reaper
+Gazette Extractor
 ==========================================
 
-This is tutorial and documentation for Gazette Reaper - engineering project developed at Adam Mickiewicz University.
+This is tutorial and documentation for Gazette Extractor - engineering project developed at Adam Mickiewicz University.
 
-There will be more info here in the future.
 
 Contents
 ---------

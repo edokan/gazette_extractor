@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Gazette Reaper documentation build configuration file, created by
+# Gazette Extractor documentation build configuration file, created by
 # sphinx-quickstart on Thu Oct  6 12:07:04 2016.
 #
 # This file is execfile()d with the current directory set to its
