@@ -1,15 +1,26 @@
+Gazette Extractor
+=================
+
 Authors:
+-----------
 Maximiliana Behnke
+
 Sandra Ambroziak
 
 Summary:
-The goal of Gazette Reaper was making an experimental system which would extract obituaries from 20th century polish newspapers.
-Furthermore the system makes easier and more efficient work on this topic made by Institute of lingusitics UAM.
+------------
 
-Used tools:
+An experimental system that trains model to extract death notices from 20th century Polish newspapers.
+
+It was created in cooperation with The Institute of Linguistics AMU.
+
+Tools:
+----------
 - KenLM
 - Vowpal Wabbit
 - OpenCV
 - NLTK
 
-Manual and tutorial : http://gazette-extractor.readthedocs.io/
+Manual and tutorial: 
+-----------------------------
+http://gazette-extractor.readthedocs.io/
