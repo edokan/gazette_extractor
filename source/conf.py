@@ -51,13 +51,13 @@ source_suffix = '.rst'
 
 # The encoding of source files.
 #source_encoding = 'utf-8-sig'
-pdf_documents = [('index', u'gazette_reaper_doc', u'Gazette Reaper', u'Maximiliana Behnke, Sandra Ambroziak'),]
+pdf_documents = [('index', u'gazette_extractor_doc', u'Gazette Extractor', u'Maximiliana Behnke, Sandra Ambroziak'),]
    
 # The master toctree document.
 master_doc = 'index'
 
 # General information about the project.
-project = u'Gazette Reaper'
+project = u'Gazette Extractor'
 copyright = u'2016, Maximiliana Behnke & Sandra Ambroziak'
 author = u'Maximiliana Behnke & Sandra Ambroziak'
 
@@ -211,7 +211,7 @@ html_static_path = ['_static']
 #html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'GazetteReaperdoc'
+htmlhelp_basename = 'GazetteExtractordoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -233,7 +233,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'GazetteReaper.tex', u'Gazette Reaper Documentation',
+    (master_doc, 'GazetteExtractor.tex', u'Gazette Extractor Documentation',
      u'Maximiliana Behnke \\& Sandra Ambroziak', 'manual'),
 ]
 
@@ -263,7 +263,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'gazettereaper', u'Gazette Reaper Documentation',
+    (master_doc, 'gazetteextractor', u'Gazette Extractor Documentation',
      [author], 1)
 ]
 
@@ -277,8 +277,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'GazetteReaper', u'Gazette Reaper Documentation',
-     author, 'GazetteReaper', 'One line description of project.',
+    (master_doc, 'GazetteExtractor', u'Gazette Extractor Documentation',
+     author, 'GazetteExtractor', 'One line description of project.',
      'Miscellaneous'),
 ]
 
